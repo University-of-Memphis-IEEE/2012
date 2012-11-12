@@ -1,0 +1,114 @@
+
+
+.navselectorVert_table {
+/*      height:300px;
+        border:1px solid #006699;
+        padding = 0;
+*/
+        background: url(../images/gray_bg.jpg) repeat;
+}
+
+.navselectorVert_table2 {  
+/*      background: url(../images/gray_bg.jpg) repeat; */
+}
+        
+.navselectorVert_table td {   
+        vertical-align: top;  
+}
+
+#viewVertTabDIV {
+        /* overflow: auto; */
+        width: 1000px;
+        min-height: 530px;
+        border: 0px ridge #AFAFAF;
+        background-color: #ffffff;
+        padding-left: 7px;
+        padding-right: 5px;
+        padding-top: 10px;
+}
+
+.viewVertTabDIVshow {
+        display: block;
+}
+.viewVertTabDIVhide {
+        display: none;
+}
+
+/* ########################################################################### */
+
+.navselectorVert-viewpf-regular {
+        display: block;
+        margin-left: 0px;
+        margin-top: 0;
+        width: 108px;
+        padding: 13px 3px 13px 8px;
+        font-size: 16px;
+        font-weight: bold;
+        text-decoration: none;
+        color: #7A7A7A;
+        background-color: #f1f1f1;	
+	border-top: 1px solid #B6B6B6;
+	border-bottom: 1px solid #B6B6B6;
+	border-left: 1px solid #B6B6B6;
+	border-right: 1px solid #B6B6B6;
+	cursor: pointer;
+}
+
+.navselectorVert-viewpf-regular a:link {
+        color: #7A7A7A;
+}
+.navselectorVert-viewpf-regular a:visited {           
+        color: #7A7A7A;
+}
+.navselectorVert-viewpf-regular a:hover {
+        color: #0077C0;
+}
+
+.navselectorVert-viewpf-selected  {
+        display: block;
+        margin-left: 0px;
+        margin-top: 0;
+        margin-bottom: 0;
+        width: 108px;
+        padding: 13px 3px 13px 8px;
+        font-size: 16px;
+        font-weight: bold;
+        text-decoration: none;
+        color: #0077C0;
+        border-top: 5px solid #63A53C;
+	border-bottom: 1px solid #B6B6B6;
+	border-left: 1px solid #B6B6B6;
+	border-right: 1px solid #B6B6B6;
+	cursor: pointer;
+}
+.navselectorVert-viewpf-selected  a:link {
+  	color: #0077C0;
+}
+.navselectorVert-viewpf-selected  a:visited {
+        color: #0077C0;
+}
+.navselectorVert-viewpf-selected  a:hover {
+        color: #0077C0;
+}
+
+.navselectorVert-viewpf-regular:hover {
+	display:block;
+	margin-left: 0px;
+    margin-top: 0;
+    width: 108px;
+    padding: 13px 3px 13px 8px;
+    font-size: 16px;
+    font-weight: bold;
+	color: #0077C0;
+    text-decoration: underline;
+    background-color: #FFFFFF;	
+	border-top: 1px solid #63A53C;
+	border-bottom: 1px solid #63A53C;
+	border-left: 1px solid #63A53C;
+	border-right: 1px solid #63A53C;
+	cursor: pointer;
+}
+
+
+
+

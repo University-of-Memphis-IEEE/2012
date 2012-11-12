@@ -1,0 +1,245 @@
+
+<!-- saved from url=(0051)http://www.robot-electronics.co.uk/htm/sd20tech.htm -->
+<html><head><meta http-equiv="Content-Type" content="text/html; charset=windows-1252">
+<meta http-equiv="Content-Language" content="en-gb">
+
+<meta name="GENERATOR" content="Microsoft FrontPage 4.0">
+<meta name="ProgId" content="FrontPage.Editor.Document">
+<title>SD20</title>
+</head>
+
+<body>
+
+<p align="center"><font size="4"><b>SD20 - </b></font><font size="4"><b>20
+Channel I2C to Servo Driver Chip</b></font></p>
+
+<p align="center"><img border="0" src="./SD20_files/sd20.jpg" width="322" height="152"></p>
+<p align="left">The SD20 chip is a pre-programmed PIC16F872 running at 8MHz.
+Position commands for up to 20 servo's are sent to the chip over the I2C bus.</p>
+
+<p align="left">Features Include;<br>
+Easy I2C bus control, same protocol as popular EEPROM's such as 24C02 <br>
+Position Control of up to 20 Servo's<br>
+Servo's inactive at power up until first position sent to it<br>
+Scan time is 20mS minimum, then proportional to the total number of servo's
+used.<br>
+Buffer can be read as well as written saving valuable memory resources on small
+controllers.<br>
+Standard mode - 256 bit resolution from 1mS to 2mS.<br>
+Expanded mode -&nbsp; Allows pulse to exceed 1mS to 2mS range for greater
+movement.<br>
+0.5uS Timer produces jitter free outputs.</p>
+
+<p align="left"><b>Connection Diagram</b> showing example connection to OOPic.</p>
+
+<p align="left"><img border="0" src="./SD20_files/sd20.GIF" width="761" height="448"><br>
+Register Usage</p>
+<div align="left">
+  <table border="0" width="100%" cellspacing="0" cellpadding="0" bgcolor="#FFFF00">
+    <tbody><tr>
+      <td width="100" align="center">Register</td>
+      <td>Function</td>
+    </tr>
+    <tr>
+      <td width="100" bgcolor="#FFFF00" align="center">0</td>
+      <td>Software Revision Number</td>
+    </tr>
+    <tr>
+      <td width="100" align="center">1</td>
+      <td>Servo1 Position</td>
+    </tr>
+    <tr>
+      <td width="100" align="center">2</td>
+      <td>Servo2 Position</td>
+    </tr>
+    <tr>
+      <td width="100" align="center">3</td>
+      <td>Servo3 Position</td>
+    </tr>
+    <tr>
+      <td width="100" align="center">4</td>
+      <td>Servo4 Position</td>
+    </tr>
+    <tr>
+      <td width="100" align="center">5</td>
+      <td>Servo5 Position</td>
+    </tr>
+    <tr>
+      <td width="100" align="center">6</td>
+      <td>Servo6 Position</td>
+    </tr>
+    <tr>
+      <td width="100" align="center">7</td>
+      <td>Servo7 Position</td>
+    </tr>
+    <tr>
+      <td width="100" align="center">8</td>
+      <td>Servo8 Position</td>
+    </tr>
+    <tr>
+      <td width="100" align="center">9</td>
+      <td>Servo9 Position</td>
+    </tr>
+    <tr>
+      <td width="100" align="center">10</td>
+      <td>Servo10 Position</td>
+    </tr>
+    <tr>
+      <td width="100" align="center">11</td>
+      <td>Servo11 Position</td>
+    </tr>
+    <tr>
+      <td width="100" align="center">12</td>
+      <td>Servo12 Position</td>
+    </tr>
+    <tr>
+      <td width="100" align="center">13</td>
+      <td>Servo13 Position</td>
+    </tr>
+    <tr>
+      <td width="100" align="center">14</td>
+      <td>Servo14 Position</td>
+    </tr>
+    <tr>
+      <td width="100" align="center">15</td>
+      <td>Servo15 Position</td>
+    </tr>
+    <tr>
+      <td width="100" align="center">16</td>
+      <td>Servo16 Position</td>
+    </tr>
+    <tr>
+      <td width="100" align="center">17</td>
+      <td>Servo17 Position</td>
+    </tr>
+    <tr>
+      <td width="100" align="center">18</td>
+      <td>Servo18 Position</td>
+    </tr>
+    <tr>
+      <td width="100" align="center">19</td>
+      <td>Servo19 Position</td>
+    </tr>
+    <tr>
+      <td width="100" align="center">20</td>
+      <td>Servo20 Position</td>
+    </tr>
+    <tr>
+      <td width="100" align="center">21</td>
+      <td>Standard/Expanded Mode Control</td>
+    </tr>
+    <tr>
+      <td width="100" align="center">22-23</td>
+      <td>Expanded mode offset - 16bit register, high byte first</td>
+    </tr>
+    <tr>
+      <td width="100" align="center">24 - 31</td>
+      <td>Unused bytes - available to user</td>
+    </tr>
+  </tbody></table>
+</div>
+<p align="left"><b>Standard mode<br>
+</b>This is the power-up state. The servo range is the standard 1mS to 2mS. You
+can restore this mode, if you have changed it, by writing 0 (zero) to register
+21. Writing values from 1 - 255 (0x01 - 0xff) will produce a pulse range as
+described in Expanded Mode below.</p>
+<p align="left"><b>Expanded mode</b><br>
+ Be careful with
+this, as it is easy to cause the servo to hit its stops.&nbsp;<br>
+This mode globally allows an expanded range of movement of the servo's. Writing any value
+greater than zero to register 21 will set Expanded Mode. The actual value written sets the
+range of the pulse width according to the following formula;<br>
+<b>Range Width (uS)&nbsp; = (255 * 256) / Reg21</b><br>
+where <b>Range Width</b> is the <i>Variation </i>in the width. So for
+example,&nbsp; if Reg21 is set to 65 the the maximum variation in pulse width
+will be;<br>
+(255*256)/65 = 1004uS = 1.004mS.<br>
+This is just the<i> variation</i> in range, for an actual range of 1mS to 2mS an offset
+needs to be added to this. The offset is contained in register 22-23 and is;<br>
+<b>(Reg22:23 +20) (uS)&nbsp;</b><br>
+So if Reg22:22 is set to 980 then the offset will be 980+20 = 1000uS = 1mS.<br>
+Therefore the pulse will vary from 1mS to 2mS. This is the same as the standard
+range.<br>
+The total pulse width is;<br>
+<b>Pulse Width (uS)&nbsp; = ((255 * 256) / Reg21) + (Reg22:23 + 20)<br>
+</b>Values of 43 and 820 will give a range of&nbsp; 0.84mS to 2.36mS. This is a
+good wide range on the HS300 servo.</p>
+<p align="left"><b>Scan Time</b><br>
+This is the refresh time between pulses to a servo. No servo is active until its position is set. The refresh period
+for the servos depends on the number in use and their pulse width. It is maintained at 20mS as far as
+possible. When the required time exceeds 20mS then it expands as required,
+according to the number of servo's used and their pulse widths. Any SD20
+channels may be chosen, because unused channels do not add to the scan time. You
+don't have to start with position 1. On Rev1 devices, writing 0 to a servo will
+move it to the minimum position, on Rev2 devices, writing 0 will de-activate the
+servo. This allows a servo to be powered down by removing drive pulses.&nbsp;</p>
+<p align="left"><b>Software Revision Number</b><br>
+Register 0&nbsp; is loaded with the software revision number after a power-up.
+It can be over-written and the register used as an additional byte if required.</p>
+<p align="left"><b>Address</b><br>
+The SD20 Servo chip is located at address 0xC2 on the I2C bus.</p>
+<p align="left"><b>Example Code</b><br>
+&nbsp;The following code demonstrates the SD20 used with the OOPic.</p>
+
+<table border="0" width="100%">
+  <tbody><tr>
+    <td width="100%" bgcolor="#00FF00"><font face="Fixedsys" size="1"><br>
+      Dim SD20 As New
+      oI2C&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+      ' Create the servo objects<br>
+      Dim val As New oByte
+      <p>Sub main()<br>
+      &nbsp; SD20.Node =
+      97&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+      ' Decimal of Hex address 0xC2 shifted right by 1<br>
+      &nbsp; SD20.Mode =
+      cv10bit&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+      &nbsp;
+      ' I2C mode uses 8-Bit Register Address<br>
+      &nbsp; SD20.NoInc =
+      1&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+      ' Don't increment</p>
+      <p>' The following 6 lines set expanded mode and can be deleted for
+      1mS-2mS operation<br>
+      &nbsp; SD20.Width =
+      cv8bit&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;&nbsp; '
+      8-bit wide data<br>
+      &nbsp; SD20.Location = 21<br>
+      &nbsp; SD20 =
+      43&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+      &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+      ' Set Expanded mode<br>
+      &nbsp; SD20.Width =
+      cv16bit&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; '
+      16-bit wide data<br>
+      &nbsp; SD20.Location = 22<br>
+      &nbsp; SD20 =
+      820&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+      ' Set offset</p>
+      </font><p><font face="Fixedsys" size="1">&nbsp; SD20.Width =
+      cv8bit&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+      &nbsp; '
+      8-bit wide data<br>
+      &nbsp; SD20.Location =
+      17&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;&nbsp;
+      ' Use Servo 17 for demonstration<br>
+      &nbsp; While(1)<br>
+      &nbsp;&nbsp;&nbsp; val = SD20<br>
+      &nbsp;&nbsp;&nbsp; val = val +
+      1&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+      ' This will move servo slowly forward,<br>
+      &nbsp;&nbsp;&nbsp; SD20 = val&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+      ' with fast reset and repeat<br>
+      &nbsp; Wend<br>
+      End Sub 'main<br>
+      &nbsp;</font></p></td>
+  </tr>
+</tbody></table>
+<font face="Fixedsys" size="1">
+<p>&nbsp;</p>
+</font>
+<p align="left">&nbsp;</p>
+
+
+
+</body></html>

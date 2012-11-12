@@ -1,0 +1,101 @@
+#viewPFDIV {
+	/* overflow: auto; */ 
+	width: 883px;
+        min-height: 730px;
+	border: 0px ridge #AFAFAF;
+	background-color: #ffffff;
+	padding-left: 7px;
+	padding-right: 5px;
+	padding-top: 10px;
+        vertical-align: top;
+}
+
+.viewPFDIVshow {
+        display: block;
+}
+.viewPFDIVhide {
+        display: none;
+}
+
+/* ########################################################################### */
+
+.navselector-viewpf-regular {
+        display: block;
+        margin-left: 0px;
+        margin-top: 0;
+        width: 90px;
+        padding: 13px 3px 13px 8px;
+        font-size: 14px;
+        font-weight: bold;
+        text-decoration: none;
+        color: #7A7A7A;
+        background-color: #f1f1f1;
+        border-top: 1px solid #B6B6B6;
+        border-bottom: 1px solid #B6B6B6;
+        border-left: 1px solid #B6B6B6;
+        border-right: 1px solid #B6B6B6;
+        cursor: pointer;
+}
+
+.navselector-viewpf-regularOLD {
+        display: block;
+        margin: 0;
+        width: 90px;
+        padding: 13px 3px 13px 3px;
+        font-size: 14px;
+        font-weight: bold;
+        text-decoration: none;
+        color: #006699;
+        border-top: 1px solid #dcdcdc;
+        background: url(../images/selector_gray_bg4.jpg) no-repeat;
+}
+
+
+.navselector-viewpf-selected  {
+        display: block;
+        margin-left: 0px;
+        margin-top: 0;
+        margin-bottom: 0;
+        width: 90px;
+        padding: 13px 3px 13px 8px;
+        font-size: 14px;  
+        font-weight: bold;
+        text-decoration: none;
+        color: #0077C0;   
+        border-top: 5px solid #63A53C;
+        border-bottom: 1px solid #B6B6B6;
+        border-left: 1px solid #B6B6B6;
+        border-right: 1px solid #B6B6B6;
+        cursor: pointer;
+}
+
+.navselector-viewpf-selectedOLD  {
+        display: block;
+        margin: 0;  
+        width: 90px;
+        padding: 13px 3px 13px 3px;
+        font-size: 14px;  
+        font-weight: bold;
+        text-decoration: none;
+        color: #FBE43D;
+        border-top: 1px solid #dcdcdc;
+        background: url(../images/selector_blue_bg3.jpg) no-repeat;
+}
+
+.navselector-viewpf-regular:hover {
+        display:block;
+        margin-left: 0px;
+    	margin-top: 0;
+    	width: 90px;
+    	padding: 13px 3px 13px 8px;
+    	font-size: 14px;
+    	font-weight: bold;
+        color: #0077C0;
+    	text-decoration: underline;
+    	background-color: #FFFFFF;
+        border-top: 1px solid #63A53C;
+        border-bottom: 1px solid #63A53C;
+        border-left: 1px solid #63A53C;
+        border-right: 1px solid #63A53C;
+        cursor: pointer;
+}     

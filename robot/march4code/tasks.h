@@ -1,0 +1,47 @@
+#ifndef tasks_h
+#define tasks_h
+#include "Arduino.h"
+
+//must support operationalModes
+/*
+READ_VOLTAGE
+READ_CAPACITANCE
+READ_TEMPERATURE
+READ_SIGNAL
+*/
+
+//Set up all task functions to return -1 for left, +1 for right, 0 if unable to determine
+
+typedef enum {VOLTAGE = 1, CAPACITANCE, TEMPERATURE, SIGNAL} task_t;
+task_t lastTask;
+typedef enum {YELLOW = 1, BLUE, GREEN, RED} taskColor_t;
+
+int8_t getVoltage()
+{
+    int8_t voltage = analogRead(38);
+   
+    return(voltage);
+}
+
+int8_t getCapacitance()
+{
+    int8_t capacitance = analogRead(38);
+   
+    return(capacitance);
+}
+
+int8_t getTemperature()
+{
+    int8_t temperature = analogRead(38);
+   
+    return(temperature);
+}
+
+int8_t getSignal()
+{
+    int8_t signal = analogRead(38);
+   
+    return(signal);
+}
+
+#endif

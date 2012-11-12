@@ -1,0 +1,92 @@
+
+<!-- saved from url=(0051)http://www.robot-electronics.co.uk/htm/cmpsqa.shtml -->
+<html><head><meta http-equiv="Content-Type" content="text/html; charset=ISO-8859-1">
+<title>CMPS03 faq</title>
+</head>
+
+<body>
+
+<p align="center"><span style="background-color: #FFFF00"><font size="5">&nbsp;CMPS03 - Compass Module
+FAQ&nbsp;</font></span></p>
+<p><b>Q</b>. <font color="#FF0000"> Will your compass tell me which direction is north?</font><br>
+<b>A</b>. No.</p>
+<p><b>Q</b>. <font color="#FF0000"> Ok, will your compass tell me which way the magnetic north pole is?</font><br>
+<b>A</b>. No.</p>
+<p><b>Q</b>. <font color="#FF0000"> So what does it do?</font><br>
+<b>A</b>. It gives you the direction of the horizontal component of the
+prevailing magnetic flux. OK, so I’m making a point here and it’s this: The
+magnetic field in a building can vary hugely. Don’t expect it to be always
+pointing north. By walking around my workshop with a standard magnetic needle
+compass I can make it point in any direction I like by moving past
+various machines, and I can do the same thing at home by going near the fridge or
+even the central heating radiators. The compass module will give the same
+results. It can only provide information about the field at its current
+location.</p>
+<p><b>Q.</b> <font color="#FF0000">Is the Compass affected by Motors, Magnets,
+Ferrous objects etc?</font><br>
+<b>A.</b> Yes. Anything that affects the local magnetic field will affect the
+Compass module. Motors in particular contain strong magnets. The only solution
+is to mount the compass as far away from magnetic/ferrous objects as is
+practicable. Also see the previous questions and answers above</p>
+<p><b>Q</b>. <font color="#FF0000"> If the accuracy of the compass is 3-4<font face="GreekMathSymbols">°</font>
+, how can you provide a resolution of 0.1<font face="GreekMathSymbols">°</font>
+ ?</font><br>
+<b>A</b>. Accuracy and resolution are not the same thing. A 3.5 digit
+multi-meter has a resolution of 1 in 2000 or 0.05%, yet the accuracy on some
+ranges can be 5% - a hundred time worse. A robot can use the resolution to
+detect small changes in direction even though there is uncertainty about the
+absolute direction. Also see previous answer.</p>
+<p><b>Q</b>. <font color="#FF0000"> How do I select between I2C and PWM outputs?</font><br>
+<b>A</b>. No need to. The PWM output is always present whether you use it or not
+and does not require a trigger signal. The I2C interface is also always
+available – just connect it up and start talking.</p>
+<p><b>Q</b>. <font color="#FF0000"> How many degrees can the module be tilted before the readings
+become inaccurate?</font><br>
+<b>A</b>. None. Moving the compass off horizontal will result in increasing
+error. The sensors are sensitive to the vertical component of the Earths
+magnetic field as well. The angle of the Earths field is not horizontal, it
+dives into the ground at an angle which varies according to location. It is this
+which produces an inherent error in the reading, and makes calibration of the
+compass required at the point where it is to be operated. After calibration you
+can expect 3-4<font face="GreekMathSymbols">°</font>
+ accuracy if you keep it horizontal.</p>
+<p><b>Q.</b>  <font color="#FF0000"> When measuring the PWM signal the maximum reading (which should be
+359 degrees) is actually 357 degrees (or similar). Why is this?</font><br>
+<b>A.</b> This is because of slight differences in&nbsp; CMPS01/03 and Controller
+oscillators and the internal software generating and measuring the pulse. If a
+359 degree roll-over is important, then you can add a "fiddle factor"
+to the calculation or alternatively, use the I2C Bus.</p>
+<p><b>Q</b>. <font color="#FF0000"> Which way up should the Compass be?</font><br>
+<b>
+A.</b> The Compass module should be horizontal, with the PCB parallel to the earths
+surface. The IC's should be on top and (for the CMPS01) the Sensors underneath.</p>
+<p><b>Q.</b>  <font color="#FF0000"> What is the difference between the CMPS01 and the CMPS03?</font><br>
+<b>A. </b>For most purposes, not a lot really. The coils around the KMZ10
+sensors on the underside were proving way to expensive to assemble and still
+sell the module at such a low cost. When Philips produced the KMZ51 sensor, an 8
+pin surface mount chip with the coils built in, it was time to change. The PCB
+is the same physical size as the CMPS01 with the same connections and uses the
+same software. Calibrating the CMPS03 is the same as CMPS01 Rev7.</p>
+<p><b>Q.</b> <font color="#FF0000"> Can the Compass be mounted near to the speaker on the SP03 speech
+synthesizer?</font><br>
+<b>
+A.</b> The speaker magnet will effect the Compass. The effects reduce with distance
+and are negligible at 10-12 inches</p>
+<p><b>Q.</b> <font color="#FF0000">My software master I2C code does not read
+correct data from the compass, but its works fine with an I2C EEPROM chip. Why
+is this?</font><br>
+<b>A.</b> The most likely cause is the master code not waiting for the I2C bus
+hold. This is where the slave can hold the SCL line low until it is ready. When
+the master releases SCL (remember it's a passive pull-up, not driven high) the
+slave may still be holding it low. The master code should then wait until it
+actually does go high before proceeding. If you are writing your own code, have
+a look at our <a href="http://www.robot-electronics.co.uk/htm/using_the_i2c_bus.htm">I2C Tutorial.</a></p>
+<p>If you have any questions of your own, Please email me. <br>
+Gerald Coe.<font size="2"> </font></p><font size="2">
+</font>
+
+<p>&nbsp; </p>
+
+
+
+</body></html>

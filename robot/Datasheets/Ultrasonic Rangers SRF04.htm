@@ -1,0 +1,153 @@
+
+<!-- saved from url=(0052)http://www.robot-electronics.co.uk/htm/sonar_faq.htm -->
+<html><head><meta http-equiv="Content-Type" content="text/html; charset=windows-1252">
+<meta http-equiv="Content-Language" content="en-gb">
+
+<meta name="GENERATOR" content="Microsoft FrontPage 4.0">
+<meta name="ProgId" content="FrontPage.Editor.Document">
+<title>Ultrasonic Rangers SRF04</title>
+</head>
+
+<body>
+
+<p align="center"><font size="4"><span style="background-color: #FFFF00">&nbsp;Ultrasonic
+Rangers&nbsp; FAQ&nbsp;</span></font></p>
+<p align="left"><b>Q.</b> <font color="#FF0000">What is the accuracy of the
+ranging?</font><br>
+<b>A.</b>&nbsp; We quote 3-4cm. Its normally better than this, however so many
+factors affect accuracy that we won't specify anything better than this. The
+speed of sound in air is approx. 346m/S at 24 degrees C. At 40KHz the wavelength
+is 8.65mm. The sonar's detect the echo by listening for the returning
+wavefronts. This echo has an attack/decay envelope, which means it builds up to
+a peak then fades away. Depending on which wavefront is the 1st to be strong
+enough to be detected, which could be the 1st, 2nd or even 3rd, the result can
+jitter by this much. Another effect which limits accuracy is a phasing effect
+where the echo is not coming from a point source. Take a wall for example, the
+ping will bounce off the wall and return to the sonar. The wall is large,
+however, and there will be reflections from a large area, with reflections from
+the outside being slightly behind the central reflection. It is the sum of all
+reflections which the sensor sees which can be either strengthened or weakened
+by phasing effects. If the echo is weakened then it may be the following
+wavefront which is detected - resulting in 8.65mm of jitter. It is possible to
+see changes of distance as small as mm but then get cm of jitter.</p>
+<p align="left"><b>Q.</b> <font color="#FF0000">How can I narrow the beam width?</font><br>
+<b>A.</b> The
+beam pattern&nbsp; is conical with the width of the beam being a
+function of the surface area, frequency and type of&nbsp; transducers and is fixed.&nbsp; The beam
+patterns of the transducers used on rangers, taken from the manufacturers
+data sheets, are shown below. beam widths are taken at the -6dB points. There is
+an interesting article by Harold Carey on reducing the beam width <a href="http://www.robot-electronics.co.uk/htm/reducing_sidelobes_of_srf10.htm">here<br>
+</a>Note that, despite the manufacturers spec' of 55°&nbsp;for both the
+SRF04/08 transducers and the SRF02 transducer, the SRF02 is slightly narrower.
+This is noticeable in practice as well.</p>
+<div align="center">
+  <center>
+  <table border="0">
+    <tbody><tr>
+      <td align="center"><img border="0" src="./Ultrasonic Rangers SRF04_files/beam3.gif" width="299" height="282"></td>
+      <td align="center"><img src="./Ultrasonic Rangers SRF04_files/beam.gif" border="0" width="311" height="296"></td>
+    </tr>
+    <tr>
+      <td align="center">SRF235&nbsp; 15°&nbsp;</td>
+      <td align="center">SRF04/08&nbsp; 55°&nbsp;</td>
+    </tr>
+    <tr>
+      <td align="center"><img border="0" src="./Ultrasonic Rangers SRF04_files/beam2.gif" width="301" height="284"></td>
+      <td align="center"><img border="0" src="./Ultrasonic Rangers SRF04_files/SRF02beam.gif" width="304" height="286"></td>
+    </tr>
+    <tr>
+      <td align="center">SRF10&nbsp; 72°</td>
+      <td align="center">
+        SRF01/02&nbsp; 55°&nbsp;</td>
+    </tr>
+    <tr>
+      <td align="center"><img border="0" src="./Ultrasonic Rangers SRF04_files/SRF485WPbeam.gif" width="300" height="281"></td>
+      <td align="center">
+      </td>
+    </tr>
+    <tr>
+      <td align="center">SRF485WPR 30°&nbsp;&nbsp; Note the side lobes.</td>
+      <td align="center">
+        <p align="center"></p></td>
+    </tr>
+  </tbody></table>
+  </center>
+</div>
+<p align="left"><b>Q.</b> <font color="#FF0000">What are the units on the
+vertical axis in the beam pattern diagram?</font><br>
+<b>A.</b> Units are dB, taken from the manufacturers data sheet at: <a href="http://www.robot-electronics.co.uk/datasheets/t400s16.pdf">http://www.robot-electronics.co.uk/datasheets/t400s16.pdf</a><br>
+<br>
+<b>Q.</b> <font color="#FF0000">What distance above the floor should the sonar
+be mounted?</font><br>
+<b>A.</b> If you can mount the SRF04/8 12in/300mm above the floor, that should
+be OK. If you mount them lower, you may need to point them upwards slightly to
+avoid reflections from the carpet pile or ridges in a concrete floor.</p>
+<p align="left"><b>Q.</b> <font color="#FF0000">Can we replace the transducers
+with sealed weatherproof types?</font><br>
+<b>A.</b> No. We have tried these on both the SRF04 and SRF08 and they do not
+work. The characteristics of the sealed devices requires a different design.
+Look at the SRF485WPR for a weather resistant part.</p>
+<p align="left"><b>Q.</b> <font color="#FF0000">What is the RH limit for the
+transducers?</font><br>
+<b>A. </b>This is not specified by the transducer manufacturers and is not
+listed in the data sheet. The following is the manufacturers response to an
+email "The RH here in Taiwan is normally higher than 95%. Just if this
+sensor(400ST/R160) is used in the air, it should be okay. Don’t use in
+outdoors. Exposing in rainy day or underwater is not allowed."</p>
+<p align="left"><b>Q.</b> <font color="#FF0000">Is there a need for us to change
+the SRF08/SRF10 address when using the sensor, can't I just use the default address?</font><br>
+<b>A. </b>Yes, if you only have one sensor you can use the default shipped
+address of 0xE0. You only need to set addresses if you are using more than one
+SRF08/SRF10 on the same I2C bus.</p>
+<p align="left"><b>Q.</b> <font color="#FF0000">Can I fire two or more sonar's
+at the same time?</font><br>
+<b>A. No!</b>&nbsp; If two or more sonar's are fired together then they could
+pick up each other "ping" resulting in a false readings. Fire them
+sequentially 65mS apart<br>
+<b>A.</b> <b>Yes! </b>We do this all the time on our test robot, firing 8
+SRF08's at the same time. They are facing outwards and fitted around a 15inch
+diameter circle. The gain is set to minimum and they are fired using the I2C
+general call at address 0, and read individually at their set addresses. Under
+these circumstances there is no direct interference.&nbsp;<br>
+<b>A. Possibly!</b> - Try it, and compare the results with firing them
+sequentially at 65mS intervals..</p>
+<p align="left"><b>Q.</b> <font color="#FF0000">If I change the SRF08/SRF10 I2C
+address, will it stay at that address next time I switch on or do I need to set
+it every time?</font><br>
+<b>A. </b>You only need to set it once and it stays set to the new address -
+even when you power up again. The I2C address is stored in EEPROM and stays the
+same until you deliberately change it.</p>
+<p align="left"><b>Q. </b><font color="#FF0000">If I change the SRF08 Range and
+Gain registers, will they stay the same the next time I switch on or do I need
+to set them every time?</font><br>
+<b>A.</b> Unlike the address, which is permanent, You will need to set the Range
+and Gain when you power up again.</p>
+
+<p align="left"><b>Q.</b> <font color="#FF0000">Can I change the sonar frequency
+of 40KHz to something else?</font><br>
+<b>A.</b> No. The frequency must be 40KHz, because that is the only frequency
+the transducers will operate at. Also the circuitry is designed to operate at
+40KHz so you cannot change the transducers to other frequency types.</p>
+<p align="left"><b>Q.</b> <font color="#FF0000">If&nbsp; I reduce the range
+setting of the SRF08, can I fire the sonar faster?</font><br>
+<b>A.</b> Yes, but be careful. If you fire the sonar and there is nothing in the
+immediate range, than on the second firing, you may pick up an echo of the first
+ping which has only just arrived from a distant object. The second ranging will
+falsely interpret this as an echo from a nearby object. To avoid this, don't
+fire the sonar more frequently than every 60mS or so.</p>
+<p><b>Q.</b> <font color="#FF0000">My software master I2C code does not read
+correct data from the SRF08/SRF10, but its works fine with an I2C EEPROM chip. Why is
+this?</font><br>
+<b>A.</b> The most likely cause is the master code not waiting for the I2C bus
+hold. This is where the slave can hold the SCL line low until it is ready. When
+the master releases SCL (remember it's a passive pull-up, not driven high) the
+slave may still be holding it low. The master code should then wait until it
+actually does go high before proceeding.</p>
+<p align="left"><b>Q.</b> <font color="#FF0000">What is the power output of the
+ultrasonic burst.</font><br>
+<b>A</b>. On the SRF04, SRF08 and SRF10 its 100-150mW. </p>
+
+
+
+
+</body></html>

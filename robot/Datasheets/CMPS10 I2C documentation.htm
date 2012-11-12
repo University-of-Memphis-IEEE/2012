@@ -1,0 +1,245 @@
+
+<!-- saved from url=(0052)http://www.robot-electronics.co.uk/htm/cmps10i2c.htm -->
+<html><head><meta http-equiv="Content-Type" content="text/html; charset=ISO-8859-1">
+<title>CMPS10 I2C documentation</title>
+</head>
+<body>
+
+
+<p align="center"><font size="6">&nbsp;CMPS10 -
+Tilt Compensated Compass Module&nbsp;</font></p>
+
+
+<p align="center"><font size="5"><b>I2C mode</b></font></p>
+
+
+<p align="left"><b><font size="3">Connections</font></b></p>
+
+
+<table border="0" bordercolorlight="#FFFFFF" bordercolordark="#FFFFFF">
+  <tbody><tr>
+    <td><img border="0" src="./CMPS10 I2C documentation_files/CMPS09arrow.png"></td>
+    <td><img border="0" src="./CMPS10 I2C documentation_files/cmps10I2C_wire.png" width="335" height="146"></td>
+  </tr>
+</tbody></table>
+
+
+<p align="left"><span style="text-align: -webkit-left; border-collapse: separate; color: rgb(0, 0, 0); font-style: normal; font-variant: normal; font-weight: normal; letter-spacing: normal; line-height: normal; orphans: 2; text-indent: 0px; text-transform: none; white-space: normal; widows: 2; word-spacing: 0px; -webkit-border-horizontal-spacing: 0px; -webkit-border-vertical-spacing: 0px; -webkit-text-decorations-in-effect: none; -webkit-text-size-adjust: auto; -webkit-text-stroke-width: 0px" class="Apple-style-span"><font size="3">To
+enter the I2C mode of operation leave the mode pin unconnected</font></span></p>
+
+
+<p align="left"><b>I2C Communication<br>
+</b>I2C communication protocol with the compass module is the same as popular
+eeprom's such as the 24C04. First send a start bit, the module address with the
+read/write bit low, then the register number you wish to read. This is followed
+by a repeated start and the module address again with the read/write bit high. You now read one or two bytes for 8bit or 16bit registers respectively.
+16bit registers are read high byte first. The compass has a 23 byte array of
+registers. organized as below:</p>
+<div align="center">
+  <center>
+<table border="1" width="693" cellspacing="0">
+  <tbody><tr>
+    <td width="76" align="center" bgcolor="#FFFFCC"><b>Register&nbsp;&nbsp;</b></td>
+    <td width="607" bgcolor="#FFFFCC" align="center"><b>&nbsp;Function</b></td>
+  </tr>
+  <tr>
+    <td width="76" align="center" bgcolor="#FFFFCC">0</td>
+    <td width="607" bgcolor="#FFFFCC" align="center">Software version</td>
+  </tr>
+  <tr>
+    <td width="76" align="center" bgcolor="#FFFFCC">1&nbsp;&nbsp;</td>
+    <td width="607" bgcolor="#FFFFCC" align="center">Compass Bearing as a byte, i.e. 0-255 for a full circle</td>
+  </tr>
+  <tr>
+    <td width="76" align="center" bgcolor="#FFFFCC">2,3&nbsp;&nbsp;</td>
+    <td width="607" bgcolor="#FFFFCC" align="center">Compass Bearing as a word, i.e. 0-3599 for a full circle,
+      representing 0-359.9 degrees.</td>
+  </tr>
+  <tr>
+    <td width="76" align="center" bgcolor="#FFFFCC">4&nbsp;</td>
+    <td width="607" bgcolor="#FFFFCC" align="center">Pitch angle - signed byte giving angle
+      in degrees from the horizontal plane</td>
+  </tr>
+  <tr>
+    <td width="76" align="center" bgcolor="#FFFFCC">5&nbsp;</td>
+    <td width="607" bgcolor="#FFFFCC" align="center">Roll angle - signed byte giving angle in
+      degrees from the horizontal plane</td>
+  </tr>
+  <tr>
+    <td width="76" align="center" bgcolor="#FFFFCC">6</td>
+    <td width="607" bgcolor="#FFFFCC" align="center">Unused</td>
+  </tr>
+  <tr>
+    <td width="76" align="center" bgcolor="#FFFFCC">7</td>
+    <td width="607" bgcolor="#FFFFCC" align="center">Unused</td>
+  </tr>
+  <tr>
+    <td width="76" align="center" bgcolor="#FFFFCC">8</td>
+    <td width="607" bgcolor="#FFFFCC" align="center">Unused</td>
+  </tr>
+  <tr>
+    <td width="76" align="center" bgcolor="#FFFFCC">9</td>
+    <td width="607" bgcolor="#FFFFCC" align="center">Unused</td>
+  </tr>
+  <tr>
+    <td width="76" align="center" bgcolor="#FFFFCC">10,11&nbsp;</td>
+    <td width="607" bgcolor="#FFFFCC" align="center">Magnetometer X axis raw
+      output, 16 bit signed integer with register 10 being the upper 8 bits</td>
+  </tr>
+  <tr>
+    <td width="76" align="center" bgcolor="#FFFFCC">12,13</td>
+    <td width="607" bgcolor="#FFFFCC" align="center">Magnetometer Y axis raw
+      output, 16 bit signed integer with register 12 being the upper 8 bits</td>
+  </tr>
+  <tr>
+    <td width="76" align="center" bgcolor="#FFFFCC">14,15</td>
+    <td width="607" bgcolor="#FFFFCC" align="center">Magnetometer Z axis raw
+      output, 16 bit signed integer with register 14 being the upper 8 bits</td>
+  </tr>
+  <tr>
+    <td width="76" align="center" bgcolor="#FFFFCC">16,17</td>
+    <td width="607" bgcolor="#FFFFCC" align="center">Accelerometer&nbsp; X axis
+      raw output, 16 bit signed integer with register 16 being the upper 8
+      bits</td>
+  </tr>
+  <tr>
+    <td width="76" align="center" bgcolor="#FFFFCC">18,19</td>
+    <td width="607" bgcolor="#FFFFCC" align="center">Accelerometer&nbsp; Y axis
+      raw output, 16 bit signed integer with register 18 being the upper 8
+      bits</td>
+  </tr>
+  <tr>
+    <td width="76" align="center" bgcolor="#FFFFCC">20,21</td>
+    <td width="607" bgcolor="#FFFFCC" align="center">Accelerometer&nbsp; Z axis
+      raw output, 16 bit signed integer with register 20 being the upper 8
+      bits</td>
+  </tr>
+  <tr>
+    <td width="76" align="center" bgcolor="#FFFFCC">22</td>
+    <td width="607" bgcolor="#FFFFCC" align="center">Command register</td>
+  </tr>
+</tbody></table>
+  </center>
+</div>
+<p>Register 1 is the bearing converted to a
+  0-255 value. This may be easier for some applications than 0-3599 which
+  requires two bytes. For those who
+  require better resolution registers 2 and 3 (high
+  byte first) form a 16 bit unsigned integer in the range 0-3599. This represents 0-359.9°.
+Register 4 is the pitch angle, giving an angle of 0 when the board is flat and
+up to +/- 85° at maximum tilt in either direction. Register 5 works the same
+way but with results for the Roll angle. There is then an array of registers
+(10-21) providing all the raw sensor data from the magnetic and acceleration
+sensors. Finally Register 22 is the command register and is used to calibrate the
+compass, change address and if necessary restore the factory default
+calibration.</p>
+<p><b>Calibration the CMPS10&nbsp;<br>
+</b> I would recommend evaluating the CMPS10 performance first
+before implementing this function. Its purpose is to remove offsets caused by
+constant magnetic sources around the CMPS10. First of all you need to determine North
+and align the CMPS10 with it, then enter the calibration mode by writing
+0xF0 to the command register (22). To calibrate
+the first point write 0xF5 to the command register, this should also light the
+LED, then move the object through 90° and write 0xF5 to the command register.
+Repeat this twice more so four points are calibrated and the LED should also turn
+off to confirm calibration completion.<br>
+Should you need to revert to the factory calibration then write the following to
+the command register with 100ms between bytes 0x20,0x2A,0x60. These commands must be sent in the correct sequence to
+restore the calibration, additionally, No other command may be issued in the middle of the
+sequence. The sequence must be sent to the command register at location 22,
+which means 4 separate write transactions on the I2C bus. Please make sure that the
+CMPS10 is not located near to ferrous objects as this
+will distort the magnetic field and induce errors in the reading.&nbsp;</p>
+<b>
+</b><p align="left"><b><b>Changing the I2C Bus Address</b><br>
+</b>
+To change the I2C address of the CMPS10 you must have only one module on the bus.
+Write the 3 sequence commands in the correct order followed by the address with
+100ms between writes.
+Example; to change the address of a compass currently at 0xC0 (the default
+shipped address) to 0xC2, write the following to address 0xC0; (0xA0, 0xAA,
+0xA5, 0xC2 ) with a 100ms delay after each of the first three bytes. These commands must be sent in the correct sequence to change the
+I2C address, additionally, No other command may be issued in the middle of the
+sequence. The sequence must be sent to the command register at location 22,
+which means 4 separate write transactions on the I2C bus. When done, you should
+label the CMPS10 with its address, however if you do forget, just power it up
+without sending any commands. The CMPS10 will flash its address out on the LED.
+One long flash followed by a number of shorter flashes indicating its address.
+The flashing is terminated immediately on sending a command the CMPS10.</p>
+<b>
+<div align="center">
+  <center>
+  <table cellspacing="0" cellpadding="0" bgcolor="#ffffcc" border="1">
+    <tbody>
+      <tr>
+        <td align="center" width="45%" colspan="2">Address</td>
+        <td align="center" width="25%" rowspan="2">Long Flash</td>
+        <td align="center" width="30%" rowspan="2">Short flashes</td>
+      </tr>
+      <tr>
+        <td align="center" width="23%">Decimal</td>
+        <td align="center" width="22%">Hex</td>
+      </tr>
+      <tr>
+        <td align="center" width="23%">192</td>
+        <td align="center" width="22%">C0</td>
+        <td align="center" width="25%">1</td>
+        <td align="center" width="30%">0</td>
+      </tr>
+      <tr>
+        <td align="center" width="23%">194</td>
+        <td align="center" width="22%">C2</td>
+        <td align="center" width="25%">1</td>
+        <td align="center" width="30%">1</td>
+      </tr>
+      <tr>
+        <td align="center" width="23%">196</td>
+        <td align="center" width="22%">C4</td>
+        <td align="center" width="25%">1</td>
+        <td align="center" width="30%">2</td>
+      </tr>
+      <tr>
+        <td align="center" width="23%">198</td>
+        <td align="center" width="22%">C6</td>
+        <td align="center" width="25%">1</td>
+        <td align="center" width="30%">3</td>
+      </tr>
+      <tr>
+        <td align="center" width="23%">200</td>
+        <td align="center" width="22%">C8</td>
+        <td align="center" width="25%">1</td>
+        <td align="center" width="30%">4</td>
+      </tr>
+      <tr>
+        <td align="center" width="23%">202</td>
+        <td align="center" width="22%">CA</td>
+        <td align="center" width="25%">1</td>
+        <td align="center" width="30%">5</td>
+      </tr>
+      <tr>
+        <td align="center" width="23%">204</td>
+        <td align="center" width="22%">CC</td>
+        <td align="center" width="25%">1</td>
+        <td align="center" width="30%">6</td>
+      </tr>
+      <tr>
+        <td align="center" width="23%">206</td>
+        <td align="center" width="22%">CE</td>
+        <td align="center" width="25%">1</td>
+        <td align="center" width="30%">7</td>
+      </tr>
+    </tbody>
+  </table>
+  </center>
+</div>
+</b>
+<p align="left">Take care not to set more than one device to the same address,
+there will be a bus collision and very unpredictable results.</p>
+
+<p align="left">If you need more information on the I2C bus, have a look at our <a href="http://www.robot-electronics.co.uk/acatalog/I2C_Tutorial.html">I2C
+tutorial</a>.</p>
+
+
+
+
+</body></html>

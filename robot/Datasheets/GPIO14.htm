@@ -1,0 +1,1491 @@
+
+<!-- saved from url=(0053)http://www.robot-electronics.co.uk/htm/gpio14tech.htm -->
+<html><head><meta http-equiv="Content-Type" content="text/html; charset=windows-1252">
+<meta http-equiv="Content-Language" content="en-gb">
+
+<meta name="GENERATOR" content="Microsoft FrontPage 4.0">
+<meta name="ProgId" content="FrontPage.Editor.Document">
+<title>GPIO14</title>
+</head>
+
+<body>
+
+<p align="center"><font size="4"><b>GPIO14 - General Purpose I2C I/O Expansion Chip</b></font></p>
+
+<p align="center"><img border="0" src="./GPIO14_files/gpio14.jpg" width="300" height="143"></p>
+
+<p align="left"><b>Introduction<br>
+</b>The GPIO14 chip is a pre-programmed PIC16F818 running on an
+internal 8MHz clk. It is intended to provide general purpose I/O expansion on
+the I2C bus.&nbsp;<br>
+In this document you will find:<br>
+<a href="http://www.robot-electronics.co.uk/htm/gpio14tech.htm#features">Features</a><br>
+<a href="http://www.robot-electronics.co.uk/htm/gpio14tech.htm#pins">GPIO14 Pin Connection Diagram</a><br>
+<a href="http://www.robot-electronics.co.uk/htm/gpio14tech.htm#reg">Internal Registers</a><br>
+<a href="http://www.robot-electronics.co.uk/htm/gpio14tech.htm#commands">Commands</a><br>
+<a href="http://www.robot-electronics.co.uk/htm/gpio14tech.htm#analogue">Analogue to Digital (A/D)
+Conversion</a><br>
+<a href="http://www.robot-electronics.co.uk/htm/gpio14tech.htm#pwm">PWM Output</a><br>
+<a href="http://www.robot-electronics.co.uk/htm/gpio14tech.htm#srf05">Ultrasonic Ranging</a><br>
+<a href="http://www.robot-electronics.co.uk/htm/gpio14tech.htm#i2c address">Changing the I2C Bus Address</a><br>
+<a href="http://www.robot-electronics.co.uk/htm/gpio14tech.htm#rf04">Example Code for RF04/CM02</a><br>
+<a href="http://www.robot-electronics.co.uk/htm/gpio14tech.htm#pic">Example Code for PIC16F877/LCD03</a></p>
+
+<p align="left"><b><a name="features"></a>Features Include;</b><br>
+Up to 2 SRF04's or 2 SRF05's controlled, including all timing. <br>
+Up to 14 general purpose Input/Output lines.<br>
+Up to 5 Analogue input channels with 10-bit A/D conversion.<br>
+1 PWM output usable as an 8-bit D/A with a simple filter.<br>
+I2C address 0x40, can be changed to allow up to 8 devices on the same I2C bus.<br>
+6 I/O lines have programmable pull-up resistors built into the chip&nbsp;.<br>
+Individual control of each pin for Input or Output.<br>
+Simple commands for Bit Set, Bit Clear and Bit Toggle.<br>
+Easy I2C bus control, similar protocol as popular EEPROM's such as 24C02.</p>
+
+<p align="left"><b><a name="pins"></a>Connection Diagram</b> showing GPIO14 Pin connections.</p>
+
+<p align="center"><img border="0" src="./GPIO14_files/gpio14.GIF" width="293" height="267"><br>
+</p>
+
+<p align="left">The GPIO14 requires a 5v power supply. Current consumption is
+very low - around 2mA. A 100n capacitor should be connected between the 5v
+supply and Ground close to the chip. I2C is connected to SDA (pin7) and SCL (pin
+10). You should have pull-up resistors on the SDA and SCL lines. A value of 4k7
+is normally OK. We use 1k8 resistors for better noise immunity, but anything
+from 1k8 to 10k should be OK. You only need one pair of pull-up resistors on the
+whole I2C bus, not for each device. The pull-up resistors are normally located
+on the bus master. Our CM02 already has 1k8 resistors fitted on the module.</p>
+
+<p align="left">There are two 8-bit ports on the GPIO14. Port A and Port B. The
+individual bits in Port A are RA0 to RA7, and for Port B they are RB0 to RB7.
+Only 6 of these are available because RB1 is used for the SDA line and RB4 is
+used for the SCL line. You can still write anything you wish to Port B though, because
+the firmware will prevent the I2C lines from being overwritten. Bits RB0, RB2,
+RB3, RB5, RB6 and RB7 are available for general purpose I/O. Some pins can have
+other functions. RA0 to RA4 can be used for analogue inputs. RB3 can be used as
+a PWM output. Bits RB0, RB2, RB3, RB5, RB6 and RB7 can have a pull-up resistor
+enabled. RA5 is an input only pin, this is a limitation of the PIC16F818 used.
+All I/O lines default to inputs on power up.</p>
+
+<p align="left"><b><a name="reg"></a>Internal Registers</b><br>
+The GPIO14 has eight internal registers, some of which have different functions
+for read and write.</p>
+
+<div align="center">
+  <center>
+  <table border="1" width="420" cellspacing="0" cellpadding="0" bgcolor="#FFFF00">
+    <tbody><tr>
+      <td width="60" align="center">Register</td>
+      <td width="176" align="center">Read</td>
+      <td width="176" align="center">Write</td>
+    </tr>
+    <tr>
+      <td width="60" bgcolor="#FFFF00" align="center">0</td>
+      <td width="176">Firmware Revision Number</td>
+      <td width="176">Command Register</td>
+    </tr>
+    <tr>
+      <td width="60" align="center">1</td>
+      <td width="176">Result high byte</td>
+      <td width="176">Port A Input/Output Mask</td>
+    </tr>
+    <tr>
+      <td width="60" align="center">2</td>
+      <td width="176">Result low byte</td>
+      <td width="176">Port B Input/Output Mask</td>
+    </tr>
+    <tr>
+      <td width="60" align="center">3</td>
+      <td width="176">A/D Control&nbsp;</td>
+      <td width="176">A/D Control&nbsp;</td>
+    </tr>
+    <tr>
+      <td width="60" align="center">4</td>
+      <td width="176">Port A</td>
+      <td width="176">Port A</td>
+    </tr>
+    <tr>
+      <td width="60" align="center">5</td>
+      <td width="176">Port B</td>
+      <td width="176">Port B</td>
+    </tr>
+    <tr>
+      <td width="60" align="center">6</td>
+      <td width="176">PWM</td>
+      <td width="176">PWM</td>
+    </tr>
+    <tr>
+      <td width="60" align="center">7</td>
+      <td width="176">Nothing (Reads Zero)</td>
+      <td width="176">I2C Address Change</td>
+    </tr>
+  </tbody></table>
+  </center>
+</div>
+<p align="left"><b>Register 0</b><br>
+When reading from the GPIO14, register 0 will return the Firmware revision
+number (currently 2 at the time of writing - November 2005). Writing to register 0 writes to the command register.
+This is used to Set, Clear and Toggle the I/O pins and a few other commands.
+Full details are in the <a href="http://www.robot-electronics.co.uk/htm/gpio14tech.htm#commands">Commands section</a> below.</p>
+
+<p align="left"><b>Registers 1 &amp; 2<br>
+</b>Reading from these registers will return the result register. This 16-bit
+register holds either the result of the most recent A/D conversion (Full details are in
+the <a href="http://www.robot-electronics.co.uk/htm/gpio14tech.htm#analogue">Analogue to digital section</a>  below) or the most
+recent ultrasonic ranging (Full details are in the <a href="http://www.robot-electronics.co.uk/htm/gpio14tech.htm#srf05">Ultrasonic
+Ranging section</a>). Writing to these
+registers writes to the Port direction control registers. Each bit that is set
+makes the port pin an input. Clearing a bit make the pin an output. For example
+writing 1 (0x01 hex or 00000001 binary) to register 2 will make Port B bit 0
+(RB0) an input and all the other port B bits an output. Note - as RA5 can only
+be an input pin, bit 5 is ignored when writing to register 1. Also RB1 and RB4
+are dedicated to the I2C bus, therefore bits 1 and 4 are ignored when writing to
+register 2.</p>
+
+<p align="left"><b>Register 3<br>
+</b>This register can be both read and written. It is used to set up which pins
+are used for analogue inputs and which are digital. Full details are in the <a href="http://www.robot-electronics.co.uk/htm/gpio14tech.htm#analogue">Analogue
+to digital section</a> below.</p>
+
+<p align="left"><b>Registers 4 &amp; 5<br>
+</b>These are the Port A and Port B data registers. Writing to these registers
+will place the data on those port pins which are configured as outputs. Pins
+which are inputs will not change, they remain input pins, however, if a pin is
+later changed to an output by writing to register 1 or 2, then this data will immediately
+be output. Reading from these registers will return the data currently on the
+pins, whether they are input or output.</p>
+
+<p align="left"><b>Register 6<br>
+</b>Pin 9, port pin RB3, can optionally be used as a pwm output. Writing to this
+register sets the 8-bit pwm period. Full details are in the <a href="http://www.robot-electronics.co.uk/htm/gpio14tech.htm#pwm"> PWM section</a> below.
+This register can be read or written.</p>
+
+<p align="left"><b>Register 7<br>
+</b>This write only register is used to change the I2C address of the GPIO14
+chip from its factory default of 0x40. See the <a href="http://www.robot-electronics.co.uk/htm/gpio14tech.htm#i2c address"> I2C address section</a> below for
+details.</p>
+
+<p align="left"><b><a name="commands"></a>Commands<br>
+</b>The GPIO14 chip has a complete set of commands to Set, Clear or Toggle the
+port pins.<b> </b>Just write one of these values to the command register, the pin will
+automatically be set to output regardless of its previous state. RA5 is missing
+because it is an input only pin and RB1 and RB4 are missing because they are
+dedicated to the I2C bus.&nbsp;</p>
+
+<div align="center">
+  <center>
+  <table border="1" bgcolor="#FFFF00" cellspacing="0" cellpadding="0">
+    <tbody><tr>
+      <td align="center" width="100">I/O Pin</td>
+      <td align="center" width="100">Bit Set</td>
+      <td align="center" width="100">Bit Clear</td>
+      <td align="center" width="100">Bit Toggle</td>
+    </tr>
+    <tr>
+      <td align="center" width="100">RA0</td>
+      <td align="center" width="100">16 (0x10)</td>
+      <td align="center" width="100">32 (0x20)</td>
+      <td align="center" width="100">48 (0x30)</td>
+    </tr>
+    <tr>
+      <td align="center" width="100">RA1</td>
+      <td align="center" width="100">17 (0x11)</td>
+      <td align="center" width="100">33 (0x21)</td>
+      <td align="center" width="100">49 (0x31)</td>
+    </tr>
+    <tr>
+      <td align="center" width="100">RA2</td>
+      <td align="center" width="100">18 (0x12)</td>
+      <td align="center" width="100">34 (0x22)</td>
+      <td align="center" width="100">50 (0x32)</td>
+    </tr>
+    <tr>
+      <td align="center" width="100">RA3</td>
+      <td align="center" width="100">19 (0x13)</td>
+      <td align="center" width="100">35 (0x23)</td>
+      <td align="center" width="100">51 (0x33)</td>
+    </tr>
+    <tr>
+      <td align="center" width="100">RA4</td>
+      <td align="center" width="100">20 (0x14)</td>
+      <td align="center" width="100">36 (0x24)</td>
+      <td align="center" width="100">52 (0x34)</td>
+    </tr>
+    <tr>
+      <td align="center" width="100">RA6</td>
+      <td align="center" width="100">22 (0x16)</td>
+      <td align="center" width="100">38 (0x26)</td>
+      <td align="center" width="100">54 (0x36)</td>
+    </tr>
+    <tr>
+      <td align="center" width="100">RA7</td>
+      <td align="center" width="100">23 (0x17)</td>
+      <td align="center" width="100">39 (0x27)</td>
+      <td align="center" width="100">55 (0x37)</td>
+    </tr>
+    <tr>
+      <td align="center" width="100">RB0</td>
+      <td align="center" width="100">24 (0x18)</td>
+      <td align="center" width="100">40 (0x28)</td>
+      <td align="center" width="100">56 (0x38)</td>
+    </tr>
+    <tr>
+      <td align="center" width="100">RB2</td>
+      <td align="center" width="100">26 (0x1A)</td>
+      <td align="center" width="100">42 (0x2A)</td>
+      <td align="center" width="100">58 (0x3A)</td>
+    </tr>
+    <tr>
+      <td align="center" width="100">RB3</td>
+      <td align="center" width="100">27 (0x1B)</td>
+      <td align="center" width="100">43 (0x2B)</td>
+      <td align="center" width="100">59 (0x3B)</td>
+    </tr>
+    <tr>
+      <td align="center" width="100">RB5</td>
+      <td align="center" width="100">29 (0x1D)</td>
+      <td align="center" width="100">45 (0x2D)</td>
+      <td align="center" width="100">61 (0x3D)</td>
+    </tr>
+    <tr>
+      <td align="center" width="100">RB6</td>
+      <td align="center" width="100">30 (0x1E)</td>
+      <td align="center" width="100">46 (0x2E)</td>
+      <td align="center" width="100">62 (0x3E)</td>
+    </tr>
+    <tr>
+      <td align="center" width="100">RB7</td>
+      <td align="center" width="100">31 (0x1F)</td>
+      <td align="center" width="100">47 (0x2F)</td>
+      <td align="center" width="100">63 (0x3F)</td>
+    </tr>
+  </tbody></table>
+  </center>
+</div>
+<p align="left">There are 15 other commands that can be sent to the command
+register:</p>
+
+<div align="center">
+  <center>
+  <table border="1" bgcolor="#FFFF00" width="391" cellspacing="0" cellpadding="0" height="337">
+    <tbody><tr>
+      <td width="75" align="center" height="19">Name</td>
+      <td width="92" align="center" height="19">Command</td>
+      <td width="293" align="center" height="19">Action</td>
+    </tr>
+    <tr>
+      <td width="75" align="center" height="19">NO_OP</td>
+      <td width="92" align="center" height="19">0 (0x00)</td>
+      <td width="293" align="center" height="19">No Operation</td>
+    </tr>
+    <tr>
+      <td width="75" align="center" height="19">PULLB_ON</td>
+      <td width="92" align="center" height="19">1 (0x01)</td>
+      <td width="293" align="center" height="19">Port B pull up resistors active</td>
+    </tr>
+    <tr>
+      <td width="75" align="center" height="19">PULLB_OFF</td>
+      <td width="92" align="center" height="19">2 (0x02)</td>
+      <td width="293" align="center" height="19">Port B pull up resistors disabled</td>
+    </tr>
+    <tr>
+      <td width="75" align="center" height="19">GET_AD0</td>
+      <td width="92" align="center" height="19">3 (0x03)</td>
+      <td width="293" align="center" height="19">Get Analogue Channel 0 (RA0)</td>
+    </tr>
+    <tr>
+      <td width="75" align="center" height="19">GET_AD1</td>
+      <td width="92" align="center" height="19">4 (0x04)</td>
+      <td width="293" align="center" height="19">Get Analogue Channel 1 (RA1)</td>
+    </tr>
+    <tr>
+      <td width="75" align="center" height="19">GET_AD2</td>
+      <td width="92" align="center" height="19">5 (0x05)</td>
+      <td width="293" align="center" height="19">Get Analogue Channel 2 (RA2)</td>
+    </tr>
+    <tr>
+      <td width="75" align="center" height="19">GET_AD3</td>
+      <td width="92" align="center" height="19">6 (0x06)</td>
+      <td width="293" align="center" height="19">Get Analogue Channel 3 (RA3)</td>
+    </tr>
+    <tr>
+      <td width="75" align="center" height="19">GET_AD4</td>
+      <td width="92" align="center" height="19">7 (0x07)</td>
+      <td width="293" align="center" height="19">Get Analogue Channel 4 (RA4)</td>
+    </tr>
+    <tr>
+      <td width="75" align="center" height="19">GET_S4A</td>
+      <td width="92" align="center" height="19">8 (0x08)</td>
+      <td width="293" align="center" height="19">Get Range of SRF04 A</td>
+    </tr>
+    <tr>
+      <td width="75" align="center" height="19">GET_S4B</td>
+      <td width="92" align="center" height="19">9 (0x09)</td>
+      <td width="293" align="center" height="19">Get Range of SRF04 B</td>
+    </tr>
+    <tr>
+      <td width="75" align="center" height="19">GET_S5A</td>
+      <td width="92" align="center" height="19">10 (0x0A)</td>
+      <td width="293" align="center" height="19">Get Range of SRF05 A</td>
+    </tr>
+    <tr>
+      <td width="75" align="center" height="19">GET_S5B</td>
+      <td width="92" align="center" height="19">11 (0x0B)</td>
+      <td width="293" align="center" height="19">Get Range of SRF05 B</td>
+    </tr>
+    <tr>
+      <td width="75" align="center" height="20">SET_US</td>
+      <td width="92" align="center" height="20">12 (0x0C)</td>
+      <td width="293" align="center" height="20">Set ranging in uS</td>
+    </tr>
+    <tr>
+      <td width="75" align="center" height="19">SET_CM</td>
+      <td width="92" align="center" height="19">13 (0x0D)</td>
+      <td width="293" align="center" height="19">Set ranging in centimeters</td>
+    </tr>
+    <tr>
+      <td width="75" align="center" height="19">SET_IN</td>
+      <td width="92" align="center" height="19">14 (0x0E)</td>
+      <td width="293" align="center" height="19">Set ranging in Inches</td>
+    </tr>
+  </tbody></table>
+  </center>
+</div>
+<p align="left">All commands not defined in the two tables above will be treated
+as NO_OP and will have no effect.<br>
+PULLB_ON and PULLB_OFF turn the Port B internal pull up resistors on and off. These are
+typically around 20k in value but can vary from 12.5k to 100k.<br>
+GET_AD0, GET_AD1, GET_AD2, GET_AD3 and GET_AD4 convert the Analogue channel to
+10-bit accuracy and place the result in the RESULT register. The A/D conversion
+is very fast. You can send the GET_ADx command and then read the RESULT register
+immediately. Commands 8 (0x08) - 14 (0x0E) are for ultrasonic ranging using the
+SRF04 or SRF05 modules. Full details of these commands are in the <a href="http://www.robot-electronics.co.uk/htm/gpio14tech.htm#srf05">Ultrasonic
+Ranging section</a>.&nbsp;</p>
+
+<p align="left"><b><a name="analogue"></a>Analogue to Digital (A/D)
+Conversion&nbsp;</b><br>
+Five of the GPIO14 pins can be used for analog inputs. These are AN0 to AN4
+(pins 17, 18, 1, 2, and 3). Which of these are actually available depends on the
+value written to register 3, the A/D control register. The A/D control register
+can also be used to set left or right justification of the 10-bit result. Left
+justification places the 10-bit result in bits 15-6 of the result register, bits
+5-0 will be zero. This is useful if you only need an 8-bit result, as you can
+just read it from register 1 (A/D result high byte). Right justification places
+the 10-bit result in bits 9-0 of the result register, bits 15-10 will be zero.
+The 16-bit result register will therefore contain values from 0 to 1023 (0x0000 to
+0x03FF). Set bit 7 of the A/D control register for right justification and
+clear it for left justification.&nbsp;</p>
+
+<p align="left">A/D Control Register</p>
+
+<div align="center">
+  <center>
+  <table border="1" cellspacing="0" cellpadding="0">
+    <tbody><tr>
+      <td align="center">7</td>
+      <td align="center">6</td>
+      <td align="center">5</td>
+      <td align="center">4</td>
+      <td align="center">3</td>
+      <td align="center">2</td>
+      <td align="center">1</td>
+      <td align="center">0</td>
+    </tr>
+    <tr>
+      <td width="70" align="center" bgcolor="#FFFF00">ADFM</td>
+      <td width="70" align="center" bgcolor="#FFFF00">1</td>
+      <td width="70" align="center" bgcolor="#FFFF00">x</td>
+      <td width="70" align="center" bgcolor="#FFFF00">x</td>
+      <td width="70" align="center" bgcolor="#FFFF00">PCFG3</td>
+      <td width="70" align="center" bgcolor="#FFFF00">PCFG2</td>
+      <td width="70" align="center" bgcolor="#FFFF00">PCFG1</td>
+      <td width="70" align="center" bgcolor="#FFFF00">PCFG0</td>
+    </tr>
+  </tbody></table>
+  </center>
+</div>
+<div align="center">
+  <center>
+  <table border="0">
+    <tbody><tr>
+      <td>&nbsp;</td>
+      <td width="60">&nbsp;</td>
+      <td width="10"></td>
+      <td>&nbsp;</td>
+    </tr>
+    <tr>
+      <td width="100" align="right">Bit7<br>
+        &nbsp;&nbsp;</td>
+      <td width="60" align="right">ADFM<br>
+        &nbsp;&nbsp;</td>
+      <td width="10"></td>
+      <td>1 A/D result is right justified<br>
+        0 A/D result is left justified&nbsp;</td>
+    </tr>
+    <tr>
+      <td width="100" align="right">Bit 6</td>
+      <td width="60" align="right">1</td>
+      <td width="10"></td>
+      <td>This bit is always forced to a 1</td>
+    </tr>
+    <tr>
+      <td width="100" align="right">Bits 5,4</td>
+      <td width="60" align="right">x x</td>
+      <td width="10"></td>
+      <td>Unused bits - always read 0</td>
+    </tr>
+    <tr>
+      <td width="100" align="right">Bits 3,2,1,0<br>
+        <br>
+        <br>
+        <br>
+        <br>
+        <br>
+        <br>
+        <br>
+        <br>
+        <br>
+        <br>
+        <br>
+        <br>
+        <br>
+        <br>
+        <br>
+        <br>
+        <br>
+        <br>
+        &nbsp;&nbsp;</td>
+      <td width="60" align="right">PCFG<br>
+        <br>
+        <br>
+        <br>
+        <br>
+        <br>
+        <br>
+        <br>
+        <br>
+        <br>
+        <br>
+        <br>
+        <br>
+        <br>
+        <br>
+        <br>
+        <br>
+        <br>
+        <br>
+        &nbsp;&nbsp;</td>
+      <td width="10"></td>
+      <td> These bits select which pins will be Analogue, Digital and Reference
+        voltage inputs.&nbsp;&nbsp;      	
+        <div align="center">
+          <table border="1" cellspacing="0" cellpadding="0">
+            <tbody><tr>
+              <td align="center" width="60">PCFG</td>
+              <td align="center" width="60">AN4</td>
+              <td align="center" width="60">AN3</td>
+              <td align="center" width="60">AN2</td>
+              <td align="center" width="60">AN1</td>
+              <td align="center" width="60">AN0</td>
+              <td align="center" width="60">VRef+</td>
+              <td align="center" width="60">VRef-</td>
+            </tr>
+            <tr>
+              <td align="center" width="60" bgcolor="#00FF00">0000</td>
+              <td align="center" width="60" bgcolor="#00FF00">A</td>
+              <td align="center" width="60" bgcolor="#00FF00">A</td>
+              <td align="center" width="60" bgcolor="#00FF00">A</td>
+              <td align="center" width="60" bgcolor="#00FF00">A</td>
+              <td align="center" width="60" bgcolor="#00FF00">A</td>
+              <td align="center" width="60" bgcolor="#00FF00">5v</td>
+              <td align="center" width="60" bgcolor="#00FF00">Ground</td>
+            </tr>
+            <tr>
+              <td align="center" width="60">0001</td>
+              <td align="center" width="60">A</td>
+              <td align="center" width="60">VRef+</td>
+              <td align="center" width="60">A</td>
+              <td align="center" width="60">A</td>
+              <td align="center" width="60">A</td>
+              <td align="center" width="60">AN3</td>
+              <td align="center" width="60">Ground</td>
+            </tr>
+            <tr>
+              <td align="center" width="60">0010</td>
+              <td align="center" width="60">A</td>
+              <td align="center" width="60">A</td>
+              <td align="center" width="60">A</td>
+              <td align="center" width="60">A</td>
+              <td align="center" width="60">A</td>
+              <td align="center" width="60">5v</td>
+              <td align="center" width="60">Ground</td>
+            </tr>
+            <tr>
+              <td align="center" width="60">0011</td>
+              <td align="center" width="60">A</td>
+              <td align="center" width="60">VRef+</td>
+              <td align="center" width="60">A</td>
+              <td align="center" width="60">A</td>
+              <td align="center" width="60">A</td>
+              <td align="center" width="60">AN3</td>
+              <td align="center" width="60">Ground</td>
+            </tr>
+            <tr>
+              <td align="center" width="60" bgcolor="#00FF00">0100</td>
+              <td align="center" width="60" bgcolor="#00FF00">D</td>
+              <td align="center" width="60" bgcolor="#00FF00">A</td>
+              <td align="center" width="60" bgcolor="#00FF00">D</td>
+              <td align="center" width="60" bgcolor="#00FF00">A</td>
+              <td align="center" width="60" bgcolor="#00FF00">A</td>
+              <td align="center" width="60" bgcolor="#00FF00">5v</td>
+              <td align="center" width="60" bgcolor="#00FF00">Ground</td>
+            </tr>
+            <tr>
+              <td align="center" width="60">0101</td>
+              <td align="center" width="60">D</td>
+              <td align="center" width="60">VRef+</td>
+              <td align="center" width="60">D</td>
+              <td align="center" width="60">A</td>
+              <td align="center" width="60">A</td>
+              <td align="center" width="60">AN3</td>
+              <td align="center" width="60">Ground</td>
+            </tr>
+            <tr>
+              <td align="center" width="60" bgcolor="#00FF00">0110</td>
+              <td align="center" width="60" bgcolor="#00FF00">D</td>
+              <td align="center" width="60" bgcolor="#00FF00">D</td>
+              <td align="center" width="60" bgcolor="#00FF00">D</td>
+              <td align="center" width="60" bgcolor="#00FF00">D</td>
+              <td align="center" width="60" bgcolor="#00FF00">D</td>
+              <td align="center" width="60" bgcolor="#00FF00">5v</td>
+              <td align="center" width="60" bgcolor="#00FF00">Ground</td>
+            </tr>
+            <tr>
+              <td align="center" width="60">0111</td>
+              <td align="center" width="60">D</td>
+              <td align="center" width="60">D</td>
+              <td align="center" width="60">D</td>
+              <td align="center" width="60">D</td>
+              <td align="center" width="60">D</td>
+              <td align="center" width="60">5v</td>
+              <td align="center" width="60">Ground</td>
+            </tr>
+            <tr>
+              <td align="center" width="60">1000</td>
+              <td align="center" width="60">A</td>
+              <td align="center" width="60">VRef+</td>
+              <td align="center" width="60">VRef-</td>
+              <td align="center" width="60">A</td>
+              <td align="center" width="60">A</td>
+              <td align="center" width="60">AN3</td>
+              <td align="center" width="60">AN2</td>
+            </tr>
+            <tr>
+              <td align="center" width="60">1001</td>
+              <td align="center" width="60">A</td>
+              <td align="center" width="60">A</td>
+              <td align="center" width="60">A</td>
+              <td align="center" width="60">A</td>
+              <td align="center" width="60">A</td>
+              <td align="center" width="60">5v</td>
+              <td align="center" width="60">Ground</td>
+            </tr>
+            <tr>
+              <td align="center" width="60">1010</td>
+              <td align="center" width="60">A</td>
+              <td align="center" width="60">VRef+</td>
+              <td align="center" width="60">A</td>
+              <td align="center" width="60">A</td>
+              <td align="center" width="60">A</td>
+              <td align="center" width="60">AN3</td>
+              <td align="center" width="60">Ground</td>
+            </tr>
+            <tr>
+              <td align="center" width="60">1011</td>
+              <td align="center" width="60">A</td>
+              <td align="center" width="60">VRef+</td>
+              <td align="center" width="60">VRef-</td>
+              <td align="center" width="60">A</td>
+              <td align="center" width="60">A</td>
+              <td align="center" width="60">AN3</td>
+              <td align="center" width="60">AN2</td>
+            </tr>
+            <tr>
+              <td align="center" width="60">1100</td>
+              <td align="center" width="60">A</td>
+              <td align="center" width="60">VRef+</td>
+              <td align="center" width="60">VRef-</td>
+              <td align="center" width="60">A</td>
+              <td align="center" width="60">A</td>
+              <td align="center" width="60">AN3</td>
+              <td align="center" width="60">AN2</td>
+            </tr>
+            <tr>
+              <td align="center" width="60">1101</td>
+              <td align="center" width="60">D</td>
+              <td align="center" width="60">VRef+</td>
+              <td align="center" width="60">VRef-</td>
+              <td align="center" width="60">A</td>
+              <td align="center" width="60">A</td>
+              <td align="center" width="60">AN3</td>
+              <td align="center" width="60">AN2</td>
+            </tr>
+            <tr>
+              <td align="center" width="60" bgcolor="#00FF00">1110</td>
+              <td align="center" width="60" bgcolor="#00FF00">D</td>
+              <td align="center" width="60" bgcolor="#00FF00">D</td>
+              <td align="center" width="60" bgcolor="#00FF00">D</td>
+              <td align="center" width="60" bgcolor="#00FF00">D</td>
+              <td align="center" width="60" bgcolor="#00FF00">A</td>
+              <td align="center" width="60" bgcolor="#00FF00">5v</td>
+              <td align="center" width="60" bgcolor="#00FF00">Ground</td>
+            </tr>
+            <tr>
+              <td align="center" width="60">1111</td>
+              <td align="center" width="60">D</td>
+              <td align="center" width="60">VRef+</td>
+              <td align="center" width="60">VRef-</td>
+              <td align="center" width="60">D</td>
+              <td align="center" width="60">A</td>
+              <td align="center" width="60">AN3</td>
+              <td align="center" width="60">AN2</td>
+            </tr>
+          </tbody></table>
+        </div>
+      </td>
+    </tr>
+  </tbody></table>
+  </center>
+</div>
+
+<p align="left">As you can see, there are limitations on which combinations of
+Analogue and Digital inputs are possible. Bear this in mind when wiring the chip
+up. The four most useful combinations are shown hi-lighted in green. The A/D Control Register must be set up before you do your first conversion.
+The GET_ADx commands will automatically make the selected channel an input an
+leave it as an input after conversion. If you write to the Port A direction
+control register, make sure you keep the required analogue channels as inputs.<br>
+A channel is converted by issuing a GET_ADx command, which will place the value
+in the result register. You can then get the value by reading the result
+register. It therefore requires two separate I2C transaction sequences, one to
+issue the command and one to read the result. The VRef+ and VRef- options are
+for using your own reference inputs. The conversion is normally for inputs
+ranging between 0v and 5v (the highlighted options). By selecting other options
+you can convert between 0v and whatever you put on the VRef+ pin, or between
+VRef+ and VRef-. Do not put more that 5v or less than 0v onto any pin. The
+minimum range for Vref+ - Vref- is 2.5v.&nbsp;</p>
+
+<p align="left"><b><a name="pwm"></a>PWM Output</b><br>
+Pin 9, port pin RB3, can optionally be used as a PWM output. A very simple
+filter will make this an analogue output. The PWM frequency is fixed at 32KHz.
+The pulse width varies from 0-100% by writing values of 0-255 (0x00 - 0xFF) to
+the PWM register. A value of 255 (0xFF) result in a continuous high and a value
+of 0 (0x00) will result in a continuous low on RB3. Writing 127 (0x7F) give a
+50% high, 50% low square wave at 32KHz. Writing to the PWM register
+automatically makes RB3 an output and starts the PWM running. You can change the
+PWM output by writing a new value to the PWM register at anytime. To stop the
+PWM just write 0 (0x00) to the PWM register. RB3 is left as an output when the
+PWM is stopped. To filter the output to an analogue voltage a simple RC filter
+using a 47k resistor and a 100nF capacitor can be used.</p>
+
+<p align="center"><img border="0" src="./GPIO14_files/gpio14fi.GIF" width="443" height="325"></p>
+
+<p align="left">This filter has a worst case output ripple of less than 1 LSB.
+The output impedance is obviously high at 47k and you may need to buffer this
+with an op-amp.</p>
+
+<p align="left"><b><a name="srf05"></a>Ultrasonic Ranging</b><br>
+Ultrasonic ranging can use either the SRF04 or SRF05 modules. Full timing and
+control of up to 2 modules is available.&nbsp;</p>
+
+<p align="center"><img border="0" src="./GPIO14_files/gpio14s4.GIF" width="774" height="389"></p>
+
+<p align="left">The diagram above shows the signal connection for connecting two
+SRF04 ultrasonic rangers to the GPIO14. This also works for the SRF05 if the
+SRF05s mode pin is unconnected which puts it in SRF04 compatibility mode. The
+GPIO14 can perform ranging of the SRF04s in uS, Centimeters or Inches. The
+following commands select the ranging mode:</p>
+
+<div align="left">
+  <table border="0" width="352">
+    <tbody><tr>
+      <td width="69" align="left"><b>Command</b></td>
+      <td width="78" align="left"><b>Value</b></td>
+      <td width="185" align="left"><b>Action</b></td>
+    </tr>
+    <tr>
+      <td width="69">SET_US</td>
+      <td width="78">12 (0x0C)&nbsp;</td>
+      <td width="185">Set ranging in uS</td>
+    </tr>
+    <tr>
+      <td width="69">SET_CM</td>
+      <td width="78">13 (0x0D)&nbsp;</td>
+      <td width="185">Set ranging in centimeters</td>
+    </tr>
+    <tr>
+      <td width="69">SET_IN&nbsp;</td>
+      <td width="78">14 (0x0E)</td>
+      <td width="185">Set ranging in Inches</td>
+    </tr>
+  </tbody></table>
+</div>
+<p align="left">To start a ranging, write GET_S4A to the command register for
+SRF04(A), or GET_S4B for SRF04(B).<br>
+Now you must wait at least 60ms for the ranging to complete. The GPIO14 will not
+respond to any further I2C commands whilst it is ranging.&nbsp;<br>
+The result of the ranging is placed in the RESULT register and can be read from
+there.</p>
+
+<p align="center"><img border="0" src="./GPIO14_files/gpio14s5.GIF" width="774" height="405"></p>
+
+<p align="left">The diagram above shows how to connect two SRF05s to the GPIO14.
+With the SRF05 mode pin tied to 0v, it operates in a single pin mode where the
+trigger and echo pulses both use the same pin.<br>
+RB6 and RB7 are unused in the mode and can be used for general purpose I/O.<br>
+To start a ranging, write GET_S5A to the command register for SRF05(A), or
+GET_S5B for SRF05(B).<br>
+Now you must wait at least 60ms for the ranging to complete. The GPIO14 will not
+respond to any further I2C commands whilst it is ranging.&nbsp;<br>
+The result of the ranging is placed in the RESULT register and can be read from
+there.</p>
+
+<p align="left"><b><a name="i2c address"></a>Changing the I2C Bus Address</b><br>
+This is the LAST thing you should attempt - really! The factory default address
+of the GPIO14 chip is 0x40. We strongly recommend you get it working at this address before you try
+changing it.</p>
+
+<p align="left">The I2C bus address can be changed to 0x40, 0x42, 0x44, 0x46,
+0x48, 0x4A, 0x4C or 0x4E, by writing a specific sequence to register 7, the I2C
+address change register. The sequence is 0xA0, 0xAA, 0xA5 and then the new
+address. This sequence must be written to register 7 in four separate I2C bus
+transactions. You must not read or write to any other registers during this
+sequence. The new address is stored in EEPROM within the chip and will be active
+immediately. To prevent confusion, you should then label the chip with its new
+address.&nbsp;</p>
+
+<p align="left"><b><a name="rf04"></a>Example Code for RF04/CM02</b><br>
+The following example code shows how to read and write via and RF04 and CM02 to
+a GPIO14 connected the CM02 I2C pins.&nbsp;<br>
+There are three functions, the first function writes a byte of data to any GPIO14 register. To set RB0 high you
+would use:
+</p>
+
+<div align="left">
+  <table border="0" bgcolor="#00FF00" width="500">
+    <tbody><tr>
+      <td><font face="Fixedsys"><br>
+        gpio_write(0, 24);<br>
+        </font></td>
+    </tr>
+  </tbody></table>
+</div>
+<p align="left">or much better:
+</p>
+
+<div align="left">
+  <table border="0" bgcolor="#00FF00" width="500">
+    <tbody><tr>
+      <td><font face="Fixedsys"><br>
+        #define CMD&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+        0<br>
+        #define SET_RB0&nbsp; 24<br>
+        gpio_write(CMD, SET_RB0);<br>
+        </font></td>
+    </tr>
+  </tbody></table>
+</div>
+<p align="left">The second function reads a GPIO14 register.
+</p>
+
+<div align="left">
+  <table border="0" bgcolor="#00FF00" width="500">
+    <tbody><tr>
+      <td><font face="Fixedsys"><br>
+        #define PORT_A&nbsp;&nbsp;&nbsp; 4<br>
+        PortAData = gpio_read1(PORT_A);&nbsp;<br>
+        </font></td>
+    </tr>
+  </tbody></table>
+</div>
+<p align="left">The third function reads two bytes from the GPIO14 registers and
+returns them as an integer.
+</p>
+
+<div align="left">
+  <table border="0" bgcolor="#00FF00" width="500">
+    <tbody><tr>
+      <td><font face="Fixedsys"><br>
+        #define RESULT&nbsp;&nbsp;&nbsp; 1<br>
+        AN0&nbsp; = gpio_read2(RESULT);&nbsp;<br>
+        </font></td>
+    </tr>
+  </tbody></table>
+</div>
+<p align="left">The three functions are intended to be dropped into a VisualC
+application. WriteFile and ReadFile are MFC functions, hCom is a handle to the
+serial comport the RF04 is assigned to.
+</p>
+
+<div align="left">
+  <table border="0" bgcolor="#00FF00">
+    <tbody><tr>
+      <td bgcolor="#00FF00" width="500"><font face="Fixedsys"><br>
+        #define I2C_CMD&nbsp;&nbsp; 0x55<br>
+        #define GPIO14&nbsp;&nbsp;&nbsp; 0x40<br>
+        <br>
+        void CRF04_driverDlg::gpio_write(BYTE reg, BYTE data)<br>
+        {<br>
+        char cmd[10];<br>
+        DWORD n;<br>
+        &nbsp; cmd[0] = I2C_CMD;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+        // send command<br>
+        &nbsp; cmd[1] = GPIO14;<br>
+        &nbsp; cmd[2] = reg;<br>
+        &nbsp; cmd[3] = 0x01;<br>
+        &nbsp; cmd[4] = data;<br>
+        &nbsp; WriteFile(hCom, &amp;cmd, 5, &amp;n, NULL);<br>
+        &nbsp; ReadFile(hCom, &amp;cmd, 1, &amp;n, NULL);<br>
+        }<br>
+        <br>
+        BYTE CRF04_driverDlg::gpio_read1(BYTE reg)&nbsp;<br>
+        {<br>
+        char cmd[10];<br>
+        DWORD n;<br>
+        &nbsp; cmd[0] = I2C_CMD;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+        // send command<br>
+        &nbsp; cmd[1] = GPIO14+1;<br>
+        &nbsp; cmd[2] = reg;<br>
+        &nbsp; cmd[3] = 1;<br>
+        &nbsp; WriteFile(hCom, &amp;cmd, 4, &amp;n, NULL);<br>
+        &nbsp; ReadFile(hCom, &amp;cmd, 1, &amp;n, NULL);<br>
+        &nbsp; return cmd[0];<br>
+        }<br>
+        <br>
+        int CRF04_driverDlg::gpio_read2(BYTE reg)&nbsp;<br>
+        {<br>
+        char cmd[10];<br>
+        DWORD n;<br>
+        &nbsp; cmd[0] = I2C_CMD;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+        // send command<br>
+        &nbsp; cmd[1] = GPIO14+1;<br>
+        &nbsp; cmd[2] = reg;<br>
+        &nbsp; cmd[3] = 2;<br>
+        &nbsp; WriteFile(hCom, &amp;cmd, 4, &amp;n, NULL);<br>
+        &nbsp; ReadFile(hCom, &amp;cmd, 2, &amp;n, NULL);<br>
+        &nbsp; return (cmd[0]&lt;&lt;8)+cmd[1];<br>
+        }<br>
+        &nbsp;</font></td>
+    </tr>
+  </tbody></table>
+</div>
+
+<p>&nbsp;</p>
+<p><b><a name="pic"></a>PIC16F877 Example</b><font face="Fixedsys"><br>
+</font>The following example shows how to read thee analogue inputs, two SRF05
+rangers, Ports A and B, and display the results on an LCD03. The code is written
+in C and is easily modified for almost any PIC chip. You can download a .c copy <a href="http://www.robot-electronics.co.uk/files/gpio_lcd03.c">
+here</a> or the compiled .hex file <a href="http://www.robot-electronics.co.uk/files/gpio_lcd03.hex">here</a>.<br>
+</p>
+<div align="left">
+  <table border="0" bgcolor="#00FF00" width="799" cellspacing="0" cellpadding="0">
+    <tbody><tr>
+      <td width="797"><font face="Fixedsys"><br>
+        ////////////////////////////////////////////////////////////////////////////////<br>
+        //<br>
+        // PIC16F877 + GPIO14 + LCD03 example<br>
+        // Written November 2005 by Gerald Coe, using HITECH PIC16 compiler<br>
+        //<br>
+        // General Purpose I/O using same I2C bus as the LCD03 is using<br>
+        // Note - assumes a 20MHz crystal for the PIC16F877<br>
+        //<br>
+        // This code is Freeware - Use it for any purpose you like.<br>
+        //<br>
+        ///////////////////////////////////////////////////////////////////////////////<br>
+        </font>
+        <p><font face="Fixedsys">#include &lt;pic.h&gt;<br>
+        #include &lt;stdio.h&gt;<br>
+        </font></p>
+        <p><font face="Fixedsys">__CONFIG(0x3b32); // configuration register -
+        see PIC data sheet for details</font></p>
+        <p><font face="Fixedsys">#define NO_OP
+        0x00&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+        // does nothing<br>
+        #define PULLB_ON 0x01&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; //
+        PORTB pull-ups<br>
+        #define PULLB_OFF 0x02<br>
+        #define GET_AD0
+        0x03&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; // Read A/D
+        channels<br>
+        #define GET_AD1 0x04<br>
+        #define GET_AD2 0x05<br>
+        #define GET_AD3 0x06<br>
+        #define GET_AD4 0x07<br>
+        #define GET_S4A
+        0x08&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; // SRF04 -
+        Trig on RB0, Echo on RB2<br>
+        #define GET_S4B
+        0x09&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; // SRF04 -
+        Trig on RB6, Echo on RB7<br>
+        #define GET_S5A
+        0x0A&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; // SRF05 -
+        Trig + Echo on RB6<br>
+        #define GET_S5B
+        0x0B&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; // SRF05 -
+        Trig + Echo on RB7<br>
+        #define SET_US
+        0x0C&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; //
+        sonar ranging in uS<br>
+        #define SET_CM
+        0x0D&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; //
+        sonar ranging in cm<br>
+        #define SET_IN
+        0x0E&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; //
+        sonar ranging in inches</font></p>
+        <p><font face="Fixedsys">#define GPIO_ADDR
+        0x40&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; // Factory supplied
+        default I2C address<br>
+        #define CMD
+        0&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+        // write only - command register<br>
+        #define REVISION
+        0&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; //
+        read only - firmware revision<br>
+        #define MASK_A
+        1&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+        // write only - TRISA reg<br>
+        #define RESULT
+        1&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+        // read only - result of A/D<br>
+        #define MASK_B
+        2&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+        // write only - TRISB reg<br>
+        #define AD_CONTROL
+        3&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; // read/write -
+        ADCON1<br>
+        #define PORT_A
+        4&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+        // read/write<br>
+        #define PORT_B
+        5&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+        // read/write<br>
+        #define PWM
+        6&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+        // read/write<br>
+        #define ADDR_CHANGE 7&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; //
+        write only</font></p>
+        <p><font face="Fixedsys">#define SET_RA0
+        0x10&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; // define bit
+        set commands for easier use<br>
+        #define SET_RA1 0x11<br>
+        #define SET_RA2 0x12<br>
+        #define SET_RA3 0x13<br>
+        #define SET_RA4 0x14<br>
+        #define SET_RA5
+        0x15&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; // not
+        available on GPIO14 (Input only)<br>
+        #define SET_RA6 0x16<br>
+        #define SET_RA7 0x17<br>
+        #define SET_RB0 0x18<br>
+        #define SET_RB1
+        0x19&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; // not
+        available on GPIO14 (SDA)<br>
+        #define SET_RB2 0x1a<br>
+        #define SET_RB3 0x1b<br>
+        #define SET_RB4
+        0x1c&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; // not
+        available on GPIO14 (SCL)<br>
+        #define SET_RB5 0x1d<br>
+        #define SET_RB6 0x1e<br>
+        #define SET_RB7 0x1f</font></p>
+        <p><font face="Fixedsys">#define CLR_RA0
+        0x20&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; // define bit
+        clear commands for easier use<br>
+        #define CLR_RA1 0x21<br>
+        #define CLR_RA2 0x22<br>
+        #define CLR_RA3 0x23<br>
+        #define CLR_RA4 0x24<br>
+        #define CLR_RA5 0x25&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; //
+        not available on GPIO14 (Input only)<br>
+        #define CLR_RA6 0x26<br>
+        #define CLR_RA7 0x27<br>
+        #define CLR_RB0 0x28<br>
+        #define CLR_RB1 0x29&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; //
+        not available on GPIO14 (SDA)<br>
+        #define CLR_RB2 0x2a<br>
+        #define CLR_RB3 0x2b<br>
+        #define CLR_RB4 0x2c&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; //
+        not available on GPIO14 (SCL)<br>
+        #define CLR_RB5 0x2d<br>
+        #define CLR_RB6 0x2e<br>
+        #define CLR_RB7 0x2f</font></p>
+        <p><font face="Fixedsys">#define TOG_RA0
+        0x30&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; // define bit
+        toggle commands for easier use<br>
+        #define TOG_RA1 0x31<br>
+        #define TOG_RA2 0x32<br>
+        #define TOG_RA3 0x33<br>
+        #define TOG_RA4 0x34<br>
+        #define TOG_RA5 0x35&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; //
+        not available on GPIO14 (Input only)<br>
+        #define TOG_RA6 0x36<br>
+        #define TOG_RA7 0x37<br>
+        #define TOG_RB0 0x38<br>
+        #define TOG_RB1 0x39&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; //
+        not available on GPIO14 (SDA)<br>
+        #define TOG_RB2 0x3a<br>
+        #define TOG_RB3 0x3b<br>
+        #define TOG_RB4 0x3c&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; //
+        not available on GPIO14 (SCL)<br>
+        #define TOG_RB5 0x3d<br>
+        #define TOG_RB6 0x3e<br>
+        #define TOG_RB7 0x3f</font></p>
+        <p><font face="Fixedsys">void clrscn(void);&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+        // prototypes<br>
+        void cursor(char pos);<br>
+        void print(char *p);<br>
+        void setup(void);<br>
+        char read1_gpio(char reg);<br>
+        int read2_gpio(char reg);<br>
+        void write_gpio(char reg, char data);</font></p>
+        <p><font face="Fixedsys">char
+        s[21];&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+        // buffer used to hold text to print</font></p>
+        <p><font face="Fixedsys">void main(void)<br>
+        {<br>
+        int result1, result2;</font></p>
+        <p><font face="Fixedsys">&nbsp;
+        setup();&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+        // sets up the PIC16F877 I2C port<br>
+        &nbsp; clrscn();&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+        // clears the LCD03 disply<br>
+        &nbsp;
+        cursor(5);&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+        // sets cursor to 1st row of LCD03<br>
+        &nbsp; sprintf(s,"GPIO14 Test "); // text, printed into our
+        buffer<br>
+        &nbsp; print(s);&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+        // send it to the LCD03<br>
+        </font></p>
+        <p><font face="Fixedsys">&nbsp; write_gpio(CMD, PULLB_ON); // turn
+        pull-up resistors on<br>
+        &nbsp; write_gpio(AD_CONTROL, 0x80); // select right justification and
+        all AN0-AN4 as analogue inputs<br>
+        &nbsp; write_gpio(CMD, SET_CM);&nbsp;&nbsp; // set ranging in
+        centimeters</font></p>
+        <p><font face="Fixedsys">&nbsp; while(1)
+        {&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+        // loop forever<br>
+        &nbsp;&nbsp;&nbsp; write_gpio(CMD, GET_AD0);<br>
+        &nbsp;&nbsp;&nbsp; result1 = read2_gpio(RESULT);<br>
+        &nbsp;&nbsp;&nbsp; write_gpio(CMD, GET_AD1);<br>
+        &nbsp;&nbsp;&nbsp; result2 = read2_gpio(RESULT);<br>
+        &nbsp;&nbsp;&nbsp;
+        cursor(21);&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+        // sets cursor to 2nd row of LCD03<br>
+        &nbsp;&nbsp;&nbsp; sprintf(s,"An0 =%04d, An1 =%04d", result1,
+        result2); // set text<br>
+        &nbsp;&nbsp;&nbsp; print(s);&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+        // send it to the LCD03</font></p>
+        <p><font face="Fixedsys">&nbsp;&nbsp;&nbsp; write_gpio(CMD, GET_AD2);<br>
+        &nbsp;&nbsp;&nbsp; result1 = read2_gpio(RESULT);<br>
+        &nbsp;&nbsp;&nbsp; result2 = read2_gpio(PORT_A); // reads two bytes -
+        Ports A and B<br>
+        &nbsp;&nbsp;&nbsp;
+        cursor(41);&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+        // sets cursor to 4th row of LCD03<br>
+        &nbsp;&nbsp;&nbsp; sprintf(s,"An2 =%04d, AB = %04X", result1,
+        result2); // set text<br>
+        &nbsp;&nbsp;&nbsp; print(s);&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+        // send it to the LCD03</font></p>
+        <p><font face="Fixedsys">&nbsp;&nbsp;&nbsp; write_gpio(CMD, GET_S5A);<br>
+        // now wait for the ranging to complete. This delay is a little over
+        100mS<br>
+        &nbsp;&nbsp;&nbsp; TMR1H =
+        0;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+        // delay while the srf05 is ranging<br>
+        &nbsp;&nbsp;&nbsp; TMR1L = 0;<br>
+        &nbsp;&nbsp;&nbsp; T1CON =
+        0x31;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+        // 1:4 prescale and running (0.8uS/clk)<br>
+        &nbsp;&nbsp;&nbsp; TMR1IF = 0;<br>
+        &nbsp;&nbsp;&nbsp;
+        while(!TMR1IF);&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+        // wait for delay time<br>
+        &nbsp;&nbsp;&nbsp; TMR1ON = 0; // stop timer<br>
+        &nbsp;&nbsp;&nbsp; result1 = read2_gpio(RESULT);</font></p>
+        <p><font face="Fixedsys">&nbsp;&nbsp;&nbsp; write_gpio(CMD, GET_S5B);<br>
+        // now wait for the ranging to complete. This delay is a little over
+        100mS<br>
+        &nbsp;&nbsp;&nbsp; TMR1H =
+        0;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+        // delay while the srf05 is ranging<br>
+        &nbsp;&nbsp;&nbsp; TMR1L = 0;<br>
+        &nbsp;&nbsp;&nbsp; T1CON =
+        0x31;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+        // 1:4 prescale and running (0.8uS/clk)<br>
+        &nbsp;&nbsp;&nbsp; TMR1IF = 0;<br>
+        &nbsp;&nbsp;&nbsp;
+        while(!TMR1IF);&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+        // wait for delay time<br>
+        &nbsp;&nbsp;&nbsp; TMR1ON =
+        0;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+        // stop timer<br>
+        &nbsp;&nbsp;&nbsp; result2 = read2_gpio(RESULT);<br>
+        &nbsp;&nbsp;&nbsp;
+        cursor(61);&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+        // sets cursor to 3rd row of LCD03<br>
+        &nbsp;&nbsp;&nbsp; sprintf(s,"SR1 =%04d, SR2 =%04d", result1,
+        result2); // set text<br>
+        &nbsp;&nbsp;&nbsp; print(s);&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+        // send it to the LCD03<br>
+        &nbsp; }<br>
+        }<br>
+        <br>
+        </font></p>
+        <p><font face="Fixedsys">void write_gpio(char reg, char data)<br>
+        {<br>
+        &nbsp; SEN =
+        1;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+        // send start bit<br>
+        &nbsp; while(SEN);&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+        // and wait for it to clear<br>
+        &nbsp; SSPIF = 0;<br>
+        &nbsp; SSPBUF = GPIO_ADDR;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+        // GPIO I2C address<br>
+        &nbsp; while(!SSPIF);&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+        // wait for interrupt<br>
+        &nbsp; SSPIF =
+        0;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+        // then clear it.<br>
+        &nbsp; SSPBUF =
+        reg;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+        // address of register to write to<br>
+        &nbsp; while(!SSPIF);&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+        //<br>
+        &nbsp; SSPIF =
+        0;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+        //<br>
+        &nbsp; SSPBUF =
+        data;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+        // write the data<br>
+        &nbsp; while(!SSPIF);&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+        //<br>
+        &nbsp; SSPIF =
+        0;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+        //<br>
+        &nbsp; PEN =
+        1;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+        // send stop bit<br>
+        &nbsp; while(PEN);&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+        //<br>
+        }<br>
+        </font></p>
+        <p><font face="Fixedsys"><br>
+        int read2_gpio(char reg)<br>
+        {<br>
+        int data;</font></p>
+        <p><font face="Fixedsys">&nbsp; SEN =
+        1;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+        // send start bit<br>
+        &nbsp; while(SEN);&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+        // and wait for it to clear<br>
+        &nbsp; ACKDT =
+        0;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+        // acknowledge bit<br>
+        &nbsp; SSPIF = 0;<br>
+        &nbsp; SSPBUF = GPIO_ADDR;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+        // I2C address<br>
+        &nbsp; while(!SSPIF);&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+        // wait for interrupt<br>
+        &nbsp; SSPIF =
+        0;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+        // then clear it.<br>
+        &nbsp; SSPBUF =
+        reg;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+        // address of register to read from<br>
+        &nbsp; while(!SSPIF);&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+        //<br>
+        &nbsp; SSPIF =
+        0;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+        //<br>
+        &nbsp; RSEN =
+        1;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+        // send repeated start bit<br>
+        &nbsp; while(RSEN);&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+        // and wait for it to clear<br>
+        &nbsp; SSPIF =
+        0;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+        //<br>
+        &nbsp; SSPBUF =
+        GPIO_ADDR+1;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; // I2C
+        address - the read bit is set this time<br>
+        &nbsp; while(!SSPIF);&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+        // wait for interrupt<br>
+        &nbsp; SSPIF =
+        0;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+        // then clear it.<br>
+        &nbsp; RCEN =
+        1;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+        // start receiving<br>
+        &nbsp; while(!STAT_BF);&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+        // wait for high byte<br>
+        &nbsp; data = SSPBUF&lt;&lt;8;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+        // and get it<br>
+        &nbsp; ACKEN =
+        1;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+        // start acknowledge sequence<br>
+        &nbsp; while(ACKEN);&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+        // wait for ack. sequence to end<br>
+        &nbsp; RCEN =
+        1;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+        // start receiving<br>
+        &nbsp; while(!STAT_BF);&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+        // wait for low byte<br>
+        &nbsp; data += SSPBUF;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+        // and get it<br>
+        &nbsp; ACKDT =
+        1;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+        // not acknowledge for last byte<br>
+        &nbsp; ACKEN =
+        1;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+        // start acknowledge sequence<br>
+        &nbsp; while(ACKEN);&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+        // wait for ack. sequence to end<br>
+        &nbsp; PEN =
+        1;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+        // send stop bit<br>
+        &nbsp; while(PEN);&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+        //<br>
+        &nbsp; return data;<br>
+        }</font></p>
+        <p><font face="Fixedsys"><br>
+        char read1_gpio(char reg)<br>
+        {<br>
+        char data;</font></p>
+        <p><font face="Fixedsys">&nbsp; SEN =
+        1;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+        // send start bit<br>
+        &nbsp; while(SEN);&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+        // and wait for it to clear<br>
+        &nbsp; ACKDT =
+        0;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+        // acknowledge bit<br>
+        &nbsp; SSPIF = 0;<br>
+        &nbsp; SSPBUF = GPIO_ADDR;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+        // I2C address<br>
+        &nbsp; while(!SSPIF);&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+        // wait for interrupt<br>
+        &nbsp; SSPIF =
+        0;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+        // then clear it.<br>
+        &nbsp; SSPBUF =
+        reg;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+        // address of register to read from<br>
+        &nbsp; while(!SSPIF);&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+        //<br>
+        &nbsp; SSPIF =
+        0;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+        //<br>
+        &nbsp; RSEN =
+        1;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+        // send repeated start bit<br>
+        &nbsp; while(RSEN);&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+        // and wait for it to clear<br>
+        &nbsp; SSPIF =
+        0;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+        //<br>
+        &nbsp; SSPBUF =
+        GPIO_ADDR+1;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; // I2C
+        address - the read bit is set this time<br>
+        &nbsp; while(!SSPIF);&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+        // wait for interrupt<br>
+        &nbsp; SSPIF =
+        0;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+        // then clear it.<br>
+        &nbsp; RCEN =
+        1;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+        // start receiving<br>
+        &nbsp; while(!STAT_BF);&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+        // wait for low byte<br>
+        &nbsp; data += SSPBUF;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+        // and get it<br>
+        &nbsp; ACKDT =
+        1;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+        // not acknowledge for last byte<br>
+        &nbsp; ACKEN =
+        1;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+        // start acknowledge sequence<br>
+        &nbsp; while(ACKEN);&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+        // wait for ack. sequence to end<br>
+        &nbsp; PEN =
+        1;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+        // send stop bit<br>
+        &nbsp; while(PEN);&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+        //<br>
+        &nbsp; return data;<br>
+        }</font></p>
+        <p><font face="Fixedsys"><br>
+        void clrscn(void)<br>
+        {<br>
+        &nbsp; SEN =
+        1;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+        // send start bit<br>
+        &nbsp; while(SEN);&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+        // and wait for it to clear<br>
+        &nbsp; SSPIF = 0;<br>
+        &nbsp; SSPBUF =
+        0xc6;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+        // LCD02 I2C address<br>
+        &nbsp; while(!SSPIF);&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+        // wait for interrupt<br>
+        &nbsp; SSPIF =
+        0;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+        // then clear it.<br>
+        &nbsp; SSPBUF =
+        0;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+        // address of register to write to<br>
+        &nbsp; while(!SSPIF);&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+        //<br>
+        &nbsp; SSPIF =
+        0;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+        //<br>
+        &nbsp; SSPBUF =
+        12;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+        // clear screen<br>
+        &nbsp; while(!SSPIF);&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+        //<br>
+        &nbsp; SSPIF =
+        0;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+        //<br>
+        &nbsp; SSPBUF =
+        4;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+        // cursor off<br>
+        &nbsp; while(!SSPIF);&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+        //<br>
+        &nbsp; SSPIF =
+        0;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+        //<br>
+        &nbsp; PEN =
+        1;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+        // send stop bit<br>
+        &nbsp; while(PEN);&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+        //<br>
+        }</font></p>
+        <p><font face="Fixedsys"><br>
+        void cursor(char pos)<br>
+        {<br>
+        &nbsp; SEN =
+        1;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+        // send start bit<br>
+        &nbsp; while(SEN);&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+        // and wait for it to clear<br>
+        &nbsp; SSPIF = 0;<br>
+        &nbsp; SSPBUF =
+        0xc6;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+        // LCD02 I2C address<br>
+        &nbsp; while(!SSPIF);&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+        // wait for interrupt<br>
+        &nbsp; SSPIF =
+        0;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+        // then clear it.<br>
+        &nbsp; SSPBUF =
+        0;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+        // address of register to write to<br>
+        &nbsp; while(!SSPIF);&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+        //<br>
+        &nbsp; SSPIF =
+        0;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+        //<br>
+        &nbsp; SSPBUF =
+        2;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+        // set cursor<br>
+        &nbsp; while(!SSPIF);&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+        //<br>
+        &nbsp; SSPIF =
+        0;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+        //<br>
+        &nbsp; SSPBUF =
+        pos;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+        //<br>
+        &nbsp; while(!SSPIF);&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+        //<br>
+        &nbsp; SSPIF =
+        0;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+        //<br>
+        &nbsp; PEN =
+        1;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+        // send stop bit<br>
+        &nbsp; while(PEN);&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+        //<br>
+        }</font></p>
+        <p><font face="Fixedsys"><br>
+        void print(char *p)<br>
+        {<br>
+        &nbsp; SEN =
+        1;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+        // send start bit<br>
+        &nbsp; while(SEN);&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+        // and wait for it to clear<br>
+        &nbsp; SSPIF = 0;<br>
+        &nbsp; SSPBUF =
+        0xc6;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+        // LCD02 I2C address<br>
+        &nbsp; while(!SSPIF);&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+        // wait for interrupt<br>
+        &nbsp; SSPIF =
+        0;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+        // then clear it.<br>
+        &nbsp; SSPBUF =
+        0;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+        // address of register to write to<br>
+        &nbsp; while(!SSPIF);&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+        //<br>
+        &nbsp; SSPIF =
+        0;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+        //<br>
+        &nbsp; while(*p) {<br>
+        &nbsp;&nbsp;&nbsp; SSPBUF =
+        *p++;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+        // write the data<br>
+        &nbsp;&nbsp;&nbsp; while(!SSPIF);&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+        //<br>
+        &nbsp;&nbsp;&nbsp; SSPIF =
+        0;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+        //<br>
+        &nbsp; }<br>
+        &nbsp; PEN =
+        1;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+        // send stop bit<br>
+        &nbsp; while(PEN);&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+        //<br>
+        }<br>
+        <br>
+        </font></p>
+        <p><font face="Fixedsys">void setup(void)<br>
+        {<br>
+        unsigned long x;</font></p>
+        <p><font face="Fixedsys">&nbsp; PORTB =
+        0xfe;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+        // RB0 (trig) is output<br>
+        &nbsp; TRISB =
+        0xfe;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+        // and starts low<br>
+        &nbsp; TRISC = 0xff;<br>
+        &nbsp; PORTC = 0xff;<br>
+        &nbsp; SSPSTAT = 0x80;<br>
+        &nbsp; SSPCON = 0x38;<br>
+        &nbsp; SSPCON2 = 0x00;<br>
+        &nbsp; SSPADD =
+        50;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+        // SCL = 91khz with 20Mhz Osc<br>
+        &nbsp; for(x=0; x&lt;300000L; x++);&nbsp;&nbsp;&nbsp;&nbsp; // wait for
+        LCD03 to initialise<br>
+        }</font></p>
+        <p>&nbsp;</p></td>
+    </tr>
+  </tbody></table>
+</div>
+
+
+
+</body></html>

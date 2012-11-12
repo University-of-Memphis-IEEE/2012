@@ -1,0 +1,467 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN">
+<!-- saved from url=(0050)http://www.robot-electronics.co.uk/htm/md25i2c.htm -->
+<html><head><meta http-equiv="Content-Type" content="text/html; charset=windows-1252"><title>MD23 Technical Documentation</title>
+<meta http-equiv="Content-Language" content="en-gb">
+
+<meta content="Microsoft FrontPage 4.0" name="GENERATOR">
+<meta content="FrontPage.Editor.Document" name="ProgId"></head>
+<body>
+<p align="center"><b><span style="BACKGROUND-COLOR: #ffff00"><font size="5">&nbsp;MD25 - Dual 12Volt 2.8Amp H Bridge Motor 
+Drive&nbsp;</font> </span></b> <br><br>
+<b><font size="4">I2C mode documentation</font><br>
+</b>(<a href="http://www.robot-electronics.co.uk/htm/md25ser.htm">Click here for Serial Mode</a>)</p>
+<p align="left"><b>Automatic Speed regulation<br>
+</b>By using feedback from the encoders the MD25 is able to dynamically
+increase power as required. If the required speed is not being achieved, the MD25
+will increase power to the motors until it reaches the desired rate or the
+motors reach there maximum output.&nbsp;Speed regulation can be turned off in
+the <a href="http://www.robot-electronics.co.uk/htm/md25i2c.htm#command register">command register</a>.</p>
+<p align="left"><b>Automatic Motor Timeout</b><br>
+The MD25 will automatically stop the motors if there is no I2C communications
+within 2 seconds. This is to prevent your robot running wild if the controller
+fails. The feature can be turned off, if not required. See
+the <a href="http://www.robot-electronics.co.uk/htm/md25i2c.htm#command register">command register</a>.</p>
+<p><b>Controlling the MD25<br>
+</b>The MD25 is designed to operate in a standard I2C bus system on addresses
+from 0xB0 to 0xBE (last bit of address is read/write bit, so even numbers only), with its
+default address being 0xB0. This is easily changed by removing the Address
+Jumper or in the software see&nbsp;<a href="http://www.robot-electronics.co.uk/htm/md25i2c.htm#change address">Changing the I2C Bus Address</a>.<br>
+&nbsp;<br>I2C mode allows the MD25 to be connected to popular 
+controllers such as the PICAXE, OOPic and BS2p, and a wide range of micro-controllers 
+like PIC's, AVR's, 8051's etc.&nbsp;<br>I2C communication protocol with the MD25
+module is the same as popular EPROM's such as the 24C04. To read one or more of 
+the MD25 registers, first send a start bit, the module address (0XB0 for example) with the read/write bit low, then the register number you 
+wish to read. This is followed by a repeated start and the module address again 
+with the read/write bit high (0XB1 in this example). You are now able to read 
+one or more registers. The MD25 has 17 registers numbered 0 to 16 as follows;</p>
+<center>
+<table cellspacing="0" cellpadding="0" bgcolor="#ccffcc" border="1">
+  <tbody>
+  <tr>
+    <td align="center" width="68" bgcolor="#66ffff">
+      <p align="center">Register</p></td>
+    <td align="center" width="176" bgcolor="#66ffff">
+      <p align="center">Name</p></td>
+    <td align="center" width="119" bgcolor="#66ffff">Read/Write</td>
+    <td align="center" width="472" bgcolor="#66ffff">
+      <p align="center">Description</p></td></tr>
+  <tr>
+    <td align="center" width="68">
+      <p align="center">0</p></td>
+    <td align="center" width="176">
+      <p align="center"><a href="http://www.robot-electronics.co.uk/htm/md25i2c.htm#speed1">Speed1</a></p></td>
+    <td align="center" width="119">R/W</td>
+    <td align="center" width="472">
+      Motor1 speed (mode 0,1) or speed (mode 
+    2,3)
+    </td></tr>
+  <tr>
+    <td align="center" width="68">
+      <p align="center">1</p></td>
+    <td align="center" width="176">
+      <p align="center"><a href="http://www.robot-electronics.co.uk/htm/md25i2c.htm#speed2">Speed2/Turn</a></p></td>
+    <td align="center" width="119">R/W</td>
+    <td align="center" width="472">
+      <p align="center">Motor2 speed (mode 0,1) or turn (mode 2,3)&nbsp;</p></td></tr>
+  <tr>
+    <td align="center" width="68">
+      <p align="center">2</p></td>
+    <td align="center" width="176">
+      <p align="center">
+      <a href="http://www.robot-electronics.co.uk/htm/md25i2c.htm#encoders">
+      Enc1a</a></p></td>
+    <td align="center" width="119">Read only</td>
+    <td align="center" width="472">
+      Encoder 1 position, 1st byte (highest), capture count when read</td></tr>
+  <tr>
+    <td align="center" width="68">
+      <p align="center">3</p></td>
+    <td align="center" width="176">
+      <a href="http://www.robot-electronics.co.uk/htm/md25i2c.htm#encoders">
+      Enc1b</a></td>
+    <td align="center" width="119">Read only</td>
+    <td align="center" width="472">
+      Encoder 1 position, 2nd byte</td></tr>
+  <tr>
+    <td align="center" width="68">
+      <p align="center">4</p></td>
+    <td align="center" width="176">
+      <a href="http://www.robot-electronics.co.uk/htm/md25i2c.htm#encoders">
+      Enc1c</a></td>
+    <td align="center" width="119">Read only</td>
+    <td align="center" width="472">
+      Encoder 1 position, 3rd byte</td></tr>
+  <tr>
+    <td align="center" width="68">
+      <p align="center">5</p></td>
+    <td align="center" width="176">
+      <a href="http://www.robot-electronics.co.uk/htm/md25i2c.htm#encoders">
+      Enc1d</a></td>
+    <td align="center" width="119">Read only</td>
+    <td align="center" width="472">
+      Encoder 1 position, 4th (lowest byte)</td></tr>
+  <tr>
+    <td align="center" width="68">
+      6</td>
+    <td align="center" width="176">
+      <a href="http://www.robot-electronics.co.uk/htm/md25i2c.htm#encoders">
+      Enc2a</a></td>
+    <td align="center" width="119">Read only</td>
+    <td align="center" width="472">
+      Encoder 2 position, 1st&nbsp; byte (highest), capture count when read</td></tr>
+  <tr>
+    <td align="center" width="68">
+      <p align="center">7</p></td>
+    <td align="center" width="176">
+      <a href="http://www.robot-electronics.co.uk/htm/md25i2c.htm#encoders">
+      Enc2b</a></td>
+    <td align="center" width="119">Read only</td>
+    <td align="center" width="472">
+      Encoder 2 position, 2nd byte</td>
+  </tr>
+  <tr>
+    <td align="center" width="68">
+      8</td>
+    <td align="center" width="176">
+      <a href="http://www.robot-electronics.co.uk/htm/md25i2c.htm#encoders">
+      Enc2c</a></td>
+    <td align="center" width="119">Read only</td>
+    <td align="center" width="472">
+      Encoder 2 position, 3rd byte</td></tr>
+  <tr>
+    <td align="center" width="68">
+      9</td>
+    <td align="center" width="176">
+      <a href="http://www.robot-electronics.co.uk/htm/md25i2c.htm#encoders">
+      Enc2d</a></td>
+    <td align="center" width="119">Read only</td>
+    <td align="center" width="472">
+      Encoder 2 position, 4th byte (lowest byte)</td></tr>
+  <tr>
+    <td align="center" width="68">
+      10</td>
+    <td align="center" width="176">
+      <a href="http://www.robot-electronics.co.uk/htm/md25i2c.htm#battery volts">Battery volts</a></td>
+    <td align="center" width="119">Read only</td>
+    <td align="center" width="472">
+      <p align="center">The supply battery voltage</p></td></tr>
+  <tr>
+    <td align="center" width="68">
+      11</td>
+    <td align="center" width="176">
+      <a href="http://www.robot-electronics.co.uk/htm/md25i2c.htm#mot current">Motor 1 current</a></td>
+    <td align="center" width="119">Read only</td>
+    <td align="center" width="472">
+      The current through motor 1</td></tr>
+  <tr>
+    <td align="center" width="68">
+      12</td>
+    <td align="center" width="176">
+      <a href="http://www.robot-electronics.co.uk/htm/md25i2c.htm#mot current">Motor 2 current</a></td>
+    <td align="center" width="119">Read only</td>
+    <td align="center" width="472">
+      The current through motor 2</td></tr>
+  <tr>
+    <td align="center" width="68">
+      13</td>
+    <td align="center" width="176">
+      <a href="http://www.robot-electronics.co.uk/htm/md25i2c.htm#software rev">Software Revision</a></td>
+    <td align="center" width="119">Read only</td>
+    <td align="center" width="472">
+      Software Revision Number</td></tr>
+  <tr>
+    <td align="center" width="68">
+      14</td>
+    <td align="center" width="176">
+      <a href="http://www.robot-electronics.co.uk/htm/md25i2c.htm#acceleration register">
+      Acceleration rate</a></td>
+    <td align="center" width="119">R/W</td>
+    <td align="center" width="472">
+      Optional Acceleration register&nbsp;</td>
+  </tr>
+  <tr>
+    <td align="center" width="68">
+      15</td>
+    <td align="center" width="176">
+      <a href="http://www.robot-electronics.co.uk/htm/md25i2c.htm#mode">Mode</a></td>
+    <td align="center" width="119">R/W</td>
+    <td align="center" width="472">
+      Mode of operation (see below)</td></tr>
+  <tr>
+    <td align="center" width="68">
+      16</td>
+    <td align="center" width="176">
+      <a href="http://www.robot-electronics.co.uk/htm/md25i2c.htm#command register">
+      Command</a></td>
+    <td align="center" width="119">R/W</td>
+    <td align="center" width="472">
+      Used for reset of encoder counts and module address changes</td></tr>
+  </tbody></table></center>
+<p>&nbsp;</p>
+<p><b><a name="speed1"></a>Speed1 Register</b><u><br></u>Depending on what mode you are in, this 
+register can affect the speed of one motor or both motors. If you are in mode 0 
+or 1 it will set the speed and direction of motor 1. The larger the number written to this 
+register, the more power is applied to the motor. A mode of 2 or 3 will control the speed and direction of both motors (subject to effect of turn 
+register).</p>
+<p><b><a name="speed2"></a>Speed2/Turn Register</b><u><br></u>When in mode 0 or 1 this register 
+operates the speed and direction of motor 2. When in mode 2 or 3 Speed2 becomes a Turn register, and any value in this register
+is 
+combined with the contents of Speed1 to steer the device (see below).&nbsp;</p>
+<p><b>Turn mode<br>
+</b>Turn mode looks at the speed register to decide if the direction is forward
+or reverse. Then it applies a subtraction or addition of the turn value on
+either motor.</p>
+<p>so if the direction is forward<br>
+motor speed1 = speed - turn<br>
+motor speed2 = speed + turn<br>
+<br>
+else the direction is reverse so<br>
+motor speed1 = speed + turn<br>
+motor speed2 = speed - turn<br>
+<br>
+If the either motor is not able to achieve the required speed for the turn
+(beyond the maximum output), then the other motor is automatically changed by
+the program to meet the required difference.</p>
+<p><b><a name="encoders"></a>Encoder registers<br>
+</b>Each motor has its encoder count stored in an array of four bytes, together
+the bytes form a signed 32 bit number, the encoder count is captured on a read
+of the highest byte (registers 2, 6) and the subsequent lower bytes will be
+held until another read of the highest byte takes place. The count is stored with the highest byte in the
+lowest numbered register. The registers can be zeroed at any time by writing 32
+(0x20) to
+the <a href="http://www.robot-electronics.co.uk/htm/md25i2c.htm#command register"> command register</a>.</p>
+<p><b><a name="battery volts"></a>Battery volts<br>
+</b>A reading of the voltage of the connected battery is available in this
+register. It reads as 10 times the voltage (121 for 12.1v).</p>
+<p><b><a name="mot current"></a>Motor 1 and 2 current<br>
+</b>A guide reading of the average current through the motor is available in this
+register. It reads approx ten times the number of Amps (25 at 2.5A).</p>
+<p><b><a name="software rev"></a>Software Revision number</b><br>This register contains the 
+revision number of the software in the modules PIC16F873 controller - currently
+1 at the time of writing.</p>
+<p><b><a name="acceleration register"></a>Acceleration Rate&nbsp;</b><u><br></u>If you 
+require a controlled acceleration period for the attached motors to reach there 
+ultimate speed, the MD25 has a register to provide this. It works by using a 
+value into the acceleration register and incrementing the power by that value.
+Changing between the current speed of the 
+motors and the new speed (from speed 1 and 2 registers). So if the 
+motors&nbsp;were traveling at full speed in the forward direction (255) and were 
+instructed to move at full speed in reverse (0), there would be 255 steps with
+an acceleration register value of 1, but 128 for a value of 2. The default
+acceleration value is 5, meaning the speed is changed from full forward to full
+reverse in 1.25 seconds. The register will accept values of 1 up to 10 which
+equates to a period of only 0.65 seconds to travel from full speed in one
+direction to full speed in the opposite direction.<br><br>So to calculate the time (in seconds) for the 
+acceleration to complete :</p>
+<p>if new speed &gt; current speed<br>
+steps = (new speed - current speed) / acceleration register</p>
+<p>if new speed &lt; current speed<br>
+steps = (current speed - new speed) / acceleration register<br>
+<br>time = steps * 25ms&nbsp;<br>
+<br>For example :</p>
+<div align="center">
+<center>
+<table cellspacing="0" cellpadding="0" width="678" border="1">
+  <tbody>
+  <tr>
+    <td align="center" width="130" bgcolor="#66ffff" height="32">Acceleration register</td>
+    <td align="center" width="83" bgcolor="#66ffff" height="32">Time/step</td>
+    <td align="center" width="110" bgcolor="#66ffff" height="32">Current speed</td>
+    <td align="center" width="92" bgcolor="#66ffff" height="32">New speed</td>
+    <td align="center" width="86" bgcolor="#66ffff" height="32">Steps</td>
+    <td align="center" width="163" bgcolor="#66ffff" height="32">Acceleration&nbsp; time</td></tr>
+  <tr>
+    <td align="center" width="130" bgcolor="#ccffcc" height="24">1</td>
+    <td align="center" width="83" bgcolor="#ccffcc" height="24">25ms</td>
+    <td align="center" width="110" bgcolor="#ccffcc" height="24">0</td>
+    <td align="center" width="92" bgcolor="#ccffcc" height="24">255</td>
+    <td align="center" width="86" bgcolor="#ccffcc" height="24">255</td>
+    <td align="center" width="163" bgcolor="#ccffcc" height="24">6.375s</td></tr>
+  <tr>
+    <td align="center" width="130" bgcolor="#ccffcc" height="23">2</td>
+    <td align="center" width="83" bgcolor="#ccffcc" height="23">25ms</td>
+    <td align="center" width="110" bgcolor="#ccffcc" height="23">127</td>
+    <td align="center" width="92" bgcolor="#ccffcc" height="23">255</td>
+    <td align="center" width="86" bgcolor="#ccffcc" height="23">64</td>
+    <td align="center" width="163" bgcolor="#ccffcc" height="23">1.6s</td></tr>
+  <tr>
+    <td align="center" width="130" bgcolor="#ccffcc" height="23">3</td>
+    <td align="center" width="83" bgcolor="#ccffcc" height="23">25ms</td>
+    <td align="center" width="110" bgcolor="#ccffcc" height="23">80</td>
+    <td align="center" width="92" bgcolor="#ccffcc" height="23">0</td>
+    <td align="center" width="86" bgcolor="#ccffcc" height="23">27</td>
+    <td align="center" width="163" bgcolor="#ccffcc" height="23">0.675s</td>
+  </tr>
+  <tr>
+    <td align="center" width="130" bgcolor="#ccffcc" height="23">5 (default)</td>
+    <td align="center" width="83" bgcolor="#ccffcc" height="23">25ms</td>
+    <td align="center" width="110" bgcolor="#ccffcc" height="23">0</td>
+    <td align="center" width="92" bgcolor="#ccffcc" height="23">255</td>
+    <td align="center" width="86" bgcolor="#ccffcc" height="23">51</td>
+    <td align="center" width="163" bgcolor="#ccffcc" height="23">1.275s</td></tr>
+  <tr>
+    <td align="center" width="130" bgcolor="#ccffcc" height="13">10</td>
+    <td align="center" width="83" bgcolor="#ccffcc" height="13">25ms</td>
+    <td align="center" width="110" bgcolor="#ccffcc" height="13">255</td>
+    <td align="center" width="92" bgcolor="#ccffcc" height="13">0</td>
+    <td align="center" width="86" bgcolor="#ccffcc" height="13">26</td>
+    <td align="center" width="163" bgcolor="#ccffcc" height="13">0.65s</td></tr></tbody></table></center></div>
+<p><b><a name="mode"></a>Mode Register</b><br>The mode register selects 
+which mode of operation and I2C data input type the user requires. The options 
+being:<br><font size="3"><b>0</b>,</font>&nbsp;&nbsp;&nbsp; (Default Setting) If a value of 0 is 
+written to the mode register then the meaning of the speed registers is literal 
+speeds in the range of 0 (Full Reverse)&nbsp; 128 (Stop)&nbsp;&nbsp; 255 
+(Full Forward).<br><br><b>1,</b>&nbsp;&nbsp;&nbsp; Mode 1 is similar to Mode 0, 
+except that the speed registers are interpreted as signed values. The meaning of 
+the speed registers is literal speeds in the range of -128 (Full 
+Reverse)&nbsp;&nbsp; 0 (Stop)&nbsp;&nbsp; 127 (Full 
+Forward).<br><br><b>2,</b>&nbsp;&nbsp;&nbsp; Writing a value of&nbsp; 2 to the 
+mode register will make speed1 control both motors speed, and speed2 becomes the 
+turn value.&nbsp;<br>Data is in the range of 0 (Full Reverse)&nbsp; 128 
+(Stop)&nbsp; 255 (Full&nbsp; Forward).<br><br><b>3,&nbsp;</b>&nbsp;&nbsp; Mode 3 
+is similar to Mode 2, except that the speed registers are interpreted as signed 
+values.&nbsp;<br>Data is in the range of -128 &nbsp;(Full Reverse)&nbsp; 0 
+(Stop)&nbsp;&nbsp; 127 (Full Forward)
+</p>
+<p><b><a name="command register"></a>Command register
+</b>
+</p>
+<div align="center">
+  <center>
+<table cellspacing="0" cellpadding="0" width="809" border="1">
+  <tbody><tr>
+    <td align="center" width="107" bgcolor="#66ffff" height="16" colspan="2">Command</td>
+    <td align="center" width="696" bgcolor="#66ffff" height="32" rowspan="2">Action</td>
+  </tr>
+  <tr>
+    <td align="center" width="52" bgcolor="#66ffff" height="16">Dec</td>
+    <td align="center" width="53" bgcolor="#66ffff" height="16">Hex</td>
+  </tr>
+  <tr>
+    <td align="center" width="52" bgcolor="#ccffcc" height="24">32</td>
+    <td align="center" width="53" bgcolor="#ccffcc" height="24">20</td>
+    <td align="center" width="696" bgcolor="#ccffcc" height="24">Resets the encoder
+      registers to zero</td>
+  </tr>
+  <tr>
+    <td align="center" width="52" bgcolor="#ccffcc" height="23">48</td>
+    <td align="center" width="53" bgcolor="#ccffcc" height="23">30</td>
+    <td align="center" width="696" bgcolor="#ccffcc" height="23">Disables automatic
+      speed regulation</td>
+  </tr>
+  <tr>
+    <td align="center" width="52" bgcolor="#ccffcc" height="23">49</td>
+    <td align="center" width="53" bgcolor="#ccffcc" height="23">31</td>
+    <td align="center" width="696" bgcolor="#ccffcc" height="23">Enables automatic
+      speed regulation (default)</td>
+  </tr>
+  <tr>
+    <td align="center" width="52" bgcolor="#ccffcc" height="13">50</td>
+    <td align="center" width="53" bgcolor="#ccffcc" height="13">32</td>
+    <td align="center" width="696" bgcolor="#ccffcc" height="13">Disables 2 second
+      timeout of motors (Version 2 onwards only)</td>
+  </tr>
+  <tr>
+    <td align="center" width="52" bgcolor="#ccffcc" height="13">51</td>
+    <td align="center" width="53" bgcolor="#ccffcc" height="13">33</td>
+    <td align="center" width="696" bgcolor="#ccffcc" height="13">Enables 2 second
+      timeout of motors when no I2C comms (default) (Version 2 onwards only)</td>
+  </tr>
+  <tr>
+    <td align="center" width="52" bgcolor="#ccffcc" height="13">160</td>
+    <td align="center" width="53" bgcolor="#ccffcc" height="13">A0</td>
+    <td align="center" width="696" bgcolor="#ccffcc" height="13">1st in sequence to
+      change I2C address</td>
+  </tr>
+  <tr>
+    <td align="center" width="52" bgcolor="#ccffcc" height="13">170</td>
+    <td align="center" width="53" bgcolor="#ccffcc" height="13">AA</td>
+    <td align="center" width="696" bgcolor="#ccffcc" height="13">2nd in sequence to
+      change I2C address</td>
+  </tr>
+  <tr>
+    <td align="center" width="52" bgcolor="#ccffcc" height="13">165</td>
+    <td align="center" width="53" bgcolor="#ccffcc" height="13">A5</td>
+    <td align="center" width="696" bgcolor="#ccffcc" height="13">3rd in sequence to
+      change I2C address</td>
+  </tr></tbody></table></center>
+</div>
+<p><b><a name="change address"></a>Changing the I2C Bus Address</b><br>
+To change the I2C address of the MD25 by writing a new address you must have only one
+module on the bus. Write the 3 sequence commands in the correct order followed by the address. Example; to change the address of an
+MD25 currently at 0xB0 (the default shipped address) to 0xB4, write the following to address
+0xB0; (0xA0, 0xAA, 0xA5, 0xB4 ). These commands must be sent in the correct sequence to change the I2C address, additionally,
+no other command may be issued in the middle of the sequence. The sequence must be sent to the command register at location
+16, which means 4 separate write transactions on the I2C bus. Because of the way
+the MD25 works internally, there
+MUST be a delay of at least 5mS between the writing of each of these 4
+transactions. When done, you should label the MD25 with its address, however if you do forget, just power it up without sending any commands. The
+MD25 will flash its address out on the green communication LED. One long flash followed by a number of shorter flashes indicating its address.
+Any command sent to the MD25 during this period will still be received and writing new speeds or a write
+to the command register will terminate the flashing.</p>
+<div align="center">
+  <center>
+  <table border="1" width="256" cellspacing="0">
+    <tbody><tr>
+      <td colspan="2" width="120" align="center" bgcolor="#CCFFCC">Address</td>
+      <td rowspan="2" width="64" align="center" bgcolor="#CCFFCC"> 	Long Flash</td>
+      <td rowspan="2" width="64" align="center" bgcolor="#CCFFCC">Short Flashes</td>
+    </tr>
+    <tr>
+      <td width="63" align="center" bgcolor="#CCFFCC">Decimal</td>
+      <td width="63" align="center" bgcolor="#CCFFCC">&nbsp;Hex</td>
+    </tr>
+    <tr>
+      <td width="63" align="center" bgcolor="#CCFFCC">176</td>
+      <td width="63" align="center" bgcolor="#CCFFCC">B0</td>
+      <td width="64" align="center" bgcolor="#CCFFCC">1</td>
+      <td width="64" align="center" bgcolor="#CCFFCC">0</td>
+    </tr>
+    <tr>
+      <td width="63" align="center" bgcolor="#CCFFCC">178</td>
+      <td width="63" align="center" bgcolor="#CCFFCC">B2</td>
+      <td width="64" align="center" bgcolor="#CCFFCC">1</td>
+      <td width="64" align="center" bgcolor="#CCFFCC">1</td>
+    </tr>
+    <tr>
+      <td width="63" align="center" bgcolor="#CCFFCC">180</td>
+      <td width="63" align="center" bgcolor="#CCFFCC">B4</td>
+      <td width="64" align="center" bgcolor="#CCFFCC">1</td>
+      <td width="64" align="center" bgcolor="#CCFFCC">2</td>
+    </tr>
+    <tr>
+      <td width="63" align="center" bgcolor="#CCFFCC">182</td>
+      <td width="63" align="center" bgcolor="#CCFFCC">B6</td>
+      <td width="64" align="center" bgcolor="#CCFFCC">1</td>
+      <td width="64" align="center" bgcolor="#CCFFCC">3</td>
+    </tr>
+    <tr>
+      <td width="63" align="center" bgcolor="#CCFFCC">184</td>
+      <td width="63" align="center" bgcolor="#CCFFCC">B8</td>
+      <td width="64" align="center" bgcolor="#CCFFCC">1</td>
+      <td width="64" align="center" bgcolor="#CCFFCC">4</td>
+    </tr>
+    <tr>
+      <td width="63" align="center" bgcolor="#CCFFCC">186</td>
+      <td width="63" align="center" bgcolor="#CCFFCC">BA</td>
+      <td width="64" align="center" bgcolor="#CCFFCC">1</td>
+      <td width="64" align="center" bgcolor="#CCFFCC">5</td>
+    </tr>
+    <tr>
+      <td width="63" align="center" bgcolor="#CCFFCC">188</td>
+      <td width="63" align="center" bgcolor="#CCFFCC">BC</td>
+      <td width="64" align="center" bgcolor="#CCFFCC">1</td>
+      <td width="64" align="center" bgcolor="#CCFFCC">6</td>
+    </tr>
+    <tr>
+      <td width="63" align="center" bgcolor="#CCFFCC">190</td>
+      <td width="63" align="center" bgcolor="#CCFFCC">BE</td>
+      <td width="64" align="center" bgcolor="#CCFFCC">1</td>
+      <td width="64" align="center" bgcolor="#CCFFCC">7</td>
+    </tr>
+  </tbody></table>
+  </center>
+</div>
+<p>Take care not to set more than one MD25 to the same address, there will be a bus collision and very unpredictable results.</p>
+
+</body></html>

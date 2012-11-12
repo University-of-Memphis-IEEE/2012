@@ -1,0 +1,39 @@
+table.form {
+  display: table; }
+  table.form td, table.form th {
+    vertical-align: top; }
+  table.form th {
+    padding-right: 0.5em;
+    text-align: right;
+    font-weight: normal; }
+  table.form span.nice_radio {
+    text-align: left;
+    display: block; }
+    table.form span.nice_radio label input.radio {
+      margin-right: 0.3em;
+      vertical-align: middle; }
+  table.form span.nice_radio.vertical label {
+    display: block; }
+  table.form td textarea {
+    width: 28em; }
+  table.form td .field_error, table.form td .field_note {
+    font-size: 80%;
+    line-height: 120%;
+    width: 30em;
+    padding-bottom: 4px; }
+  table.form td .field_error {
+    color: red; }
+
+table.form.indent {
+  padding-left: 1em; }
+
+table.form.spaced td, table.form.spaced th, table.form tr.last_in_group td, table.form tr.last_in_group th {
+  padding-bottom: 0.5em; }
+
+.form_note {
+  font-size: 80%;
+  line-height: 120%; }
+
+.cc_img {
+  display: none;
+  vertical-align: middle; }

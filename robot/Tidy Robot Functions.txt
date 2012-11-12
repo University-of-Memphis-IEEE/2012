@@ -1,0 +1,2745 @@
+static void processSync()
+{
+// Sync was detected so reset the channel to 1 and update the system state
+   Pulses[0] = ICR1 / TICKS_PER_uS;  // save the sync pulse duration for debugging
+   if(State == READY_state) 
+   {
+	   if( Channel != NbrChannels)
+           {  // if the number of channels is unstable, go into failsafe
+		   State = FAILSAFE_state;
+	   }
+   }
+   else
+   {
+     if(State == NOT_SYNCHED_state)
+     {
+	 State = ACQUIRING_state;	  // this is the first sync pulse, we need one more to fill the channel data array
+	 stateCount = 0;
+     }
+	 else if( State == ACQUIRING_state)	
+         {
+	    if(++stateCount > ACQUISITION_COUNT) 
+            {
+		State = READY_state;	     // this is the second sync and all channel data is ok so flag that channel data is valid
+	        NbrChannels = Channel;       // save the number of channels detected
+	    }
+         }
+	 else if( State == FAILSAFE_state)	
+         {
+		 if(Channel == NbrChannels)
+                 {  // did we get good pulses on all channels
+			State = READY_state;
+		 }
+	 }
+   }
+   Channel = 0;	 // reset the channel counter
+}
+
+ISR(TIMER1_OVF_vect)
+{
+  if(State == READY_state)
+  {
+    State = FAILSAFE_state;  // use fail safe values if signal lost
+    Channel = 0; // reset the channel count
+  }
+}
+
+ISR(TIMER1_CAPT_vect)
+{
+  // we want to measure the time to the end of the pulse
+  if( (_SFR_BYTE(TCCR1B) & (1<<ICES1)) == pulseEnd )
+  {
+    TCNT1 = 0;	 // reset the counter
+    if(ICR1 >= SYNC_GAP_LEN)
+    {   // is the space between pulses big enough to be the SYNC
+	processSync();
+    }
+    else if(Channel < MAX_CHANNELS) 
+    {  // check if its a valid channel pulse and save it
+	if( (ICR1 >= MIN_IN_PULSE_WIDTH)  && (ICR1 <= MAX_IN_PULSE_WIDTH) )
+        { // check for valid channel data
+	  Pulses[++Channel] = ICR1 / TICKS_PER_uS;  // store pulse length as microsoeconds
+	}
+	else if(State == READY_state)
+        {
+	  State = FAILSAFE_state;  // use fail safe values if input data invalid
+	  Channel = 0; // reset the channel count
+	}
+    }
+  }
+}
+
+class ServoDecodeClass //ServoDecodeClass begin
+{
+  public:
+    ServoDecodeClass(){}
+    
+    void begin()
+    {
+      pinMode(ICP_PIN,INPUT);
+      Channel = 0;
+      State = NOT_SYNCHED_state;
+      TCCR1A = 0x00;	   // COM1A1=0, COM1A0=0 => Disconnect Pin OC1 from Timer/Counter 1 -- PWM11=0,PWM10=0 => PWM Operation disabled
+      TCCR1B = 0x02;	   // 16MHz clock with prescaler means TCNT1 increments every .5 uS (cs11 bit set
+      TIMSK1 = _BV(ICIE1)|_BV (TOIE1);   // enable input capture and overflow interrupts for timer 1
+      for(uint8_t chan = 1; chan <=  MAX_CHANNELS; chan++)
+    	  Failsafe[chan] = Pulses[chan]= 1500; // set midpoint as default values for pulse and failsafe
+    }
+    
+    decodeState_t getState()
+    {
+      return State;
+    }
+    
+    uint8_t getChanCount()
+    {
+      return NbrChannels;
+    }
+    
+void  setFailsafe(uint8_t chan, int16_t value)
+{
+    // pulse width to use if invalid data, value of 0 uses last valid data
+      if( (chan > 0) && (chan <=  MAX_CHANNELS)  ) 
+      {
+    	 Failsafe[chan] = value;
+      }
+}
+
+void  setFailsafe()
+{
+    // setFailsafe with no arguments sets failsafe for all channels to their current values
+    // usefull to capture current tx settings as failsafe values
+      if(State == READY_state)
+        for(uint8_t chan = 1; chan <=  MAX_CHANNELS; chan++) 
+        {
+    	  Failsafe[chan] = Pulses[chan];
+        }
+}
+
+int16_t GetChannelPulseWidth( uint8_t channel)
+{
+      // this is the access function for channel data
+      int16_t result = 0; // default value
+      if( channel <=  MAX_CHANNELS)  
+      {
+         if( (State == FAILSAFE_state)&& (Failsafe[channel] > 0 ) )
+    	   result = Failsafe[channel]; // return the channels failsafe value if set and State is Failsafe
+    	 else if( (State == READY_state) || (State == FAILSAFE_state) )
+         {
+           bitClear(TIMSK1, _BV(ICIE1)|_BV (TOIE1));//disable Timer1 input capture and overflow interrupts 
+    	   //cli();	 //disable interrupts
+    	   result =  Pulses[channel] ;  // return the last valid pulse width for this channel
+    	   //sei(); // enable interrupts
+           bitSet(TIMSK1, _BV(ICIE1)|_BV (TOIE1));//enable Timer1 input capture and overflow interrupts
+    	 }
+      }
+      return result;
+}
+
+void configureRC()//used for debugging, testing, and capturing typical values for setting up constants
+{
+    int pulsewidth;
+    while(true)
+    {   
+        // print the decoder state
+      if( ServoDecode.getState()!= READY_state) 
+      {
+        Serial.print("The decoder is ");
+        Serial.println(stateStrings[ServoDecode.getState()]);
+        for ( int i =0; i <=MAX_CHANNELS; i++ ){ // print the status of the channels
+    	Serial.print("Cx "); // if you see this, the decoder does not have a valid signal
+    	Serial.print(i);
+    	Serial.print(" invalid pulsewidth : ");
+    	pulsewidth = ServoDecode.GetChannelPulseWidth(i);
+    	Serial.print(pulsewidth);
+    	Serial.print("  ");
+        }
+        Serial.println("");
+      }
+      else {
+        // decoder is ready, print the channel pulse widths
+        for ( int i =1; i <=MAX_CHANNELS; i++ ){ // print the status of the first four channels
+    	Serial.print("Channel ");
+    	Serial.print(i);
+    	Serial.print(" pulsewidth : ");
+    	pulsewidth = ServoDecode.GetChannelPulseWidth(i);
+    	Serial.print(pulsewidth);
+    	Serial.print("  ");
+        }
+        Serial.println("");        
+      }
+    }
+}
+
+void radioControlSetup()
+{
+  sonarSetup();
+  while(!digitalRead(START_PIN))
+  { // wait in empty loop till start button is pressed   
+  }
+  delay(100);
+  zeroCompass();
+  encoderReset();
+  ServoDecode.begin();
+  ServoDecode.setFailsafe(1,1500); // set channel 1 failsafe pulsewidth. right horizontal stick
+  ServoDecode.setFailsafe(2,1500); // set channel 2 failsafe pulsewidth. right vertical stick
+  ServoDecode.setFailsafe(3,1500); // set channel 3 failsafe pulsewidth. left vertical stick
+  ServoDecode.setFailsafe(4,1500); // set channel 4 failsafe pulsewidth. left horizontal stick
+  ServoDecode.setFailsafe(5,1500); // set channel 5 failsafe pulsewidth. left buttons, use to activate bowlight
+  ServoDecode.setFailsafe(6,1500); // set channel 6 failsafe pulsewidth. right buttons, use to override soft stop remotely
+}
+
+void radioControlLoop()
+{
+    if(ServoDecode.getState()== READY_state) //Radio Control is functioning properly
+      {         
+       // drive under radio control
+        int16_t leftButtonMin = 2250;
+        int16_t leftButtonMax = 750;
+        int16_t rightButtonMin = 2250;
+        int16_t rightButtonMax = 750;
+
+        int16_t leftVertical = ServoDecode.GetChannelPulseWidth(3);
+        int16_t rightVertical = ServoDecode.GetChannelPulseWidth(2);
+        int16_t leftHorizontal = ServoDecode.GetChannelPulseWidth(4);
+        int16_t rightHorizontal = ServoDecode.GetChannelPulseWidth(1);
+        int16_t leftButtons = ServoDecode.GetChannelPulseWidth(5);
+        int16_t rightButtons = ServoDecode.GetChannelPulseWidth(6);
+        
+        if(leftButtons < leftButtonMin)
+        leftButtonMin = leftButtons;
+        if(leftButtons > leftButtonMax)
+        leftButtonMax = leftButtons;
+        
+        if(rightButtons < rightButtonMin)
+        rightButtonMin = rightButtons;
+        if(rightButtons > rightButtonMax)
+        rightButtonMax = rightButtons;
+        
+        Serial.println("leftButtons: ");
+        Serial.println(leftButtons);
+        Serial.println("leftButtonMin: ");
+        Serial.println(leftButtonMin);
+        Serial.println("leftButtonMax: ");
+        Serial.println(leftButtonMax);
+        
+        Serial.println("rightButtons: ");
+        Serial.println(rightButtons);
+        Serial.println("rightButtonMin: ");
+        Serial.println(rightButtonMin);
+        Serial.println("rightButtonMax: ");
+        Serial.println(rightButtonMax);
+        
+    	leftVertical = map(leftVertical, 750, 2250, -127, 127);       
+       rightVertical = map(rightVertical, 750, 2250, -127, 127); 
+        leftHorizontal = map(leftHorizontal, 750, 2250, -127, 127);       
+       rightHorizontal = map(rightHorizontal, 750, 2250, -127, 127);      
+     
+         //int8_t strafe = leftHorizontal + rightHorizontal;
+         //constrain(strafe, -127, 127);
+         
+        
+         
+         drive4wheelSpeeds(leftVertical, rightVertical, leftVertical, rightVertical);
+      }
+      else if(ServoDecode.getState()== FAILSAFE_state)// radio not ready
+      {         
+            fullStop(); 
+      } 
+      else
+        fullStop();     
+}
+
+boolean seekYellow()
+{
+    boolean found = false;
+    if(cameraConnected)
+    {
+    
+    }
+    else
+    {
+        found = false;
+    }
+    return found;
+}
+
+boolean seekBlue()
+{
+    boolean found = false;
+    //TODO
+    return found;
+}
+
+boolean seekGreen()
+{
+    boolean found = false;
+    //TODO
+    return found;
+}
+
+boolean seekRed()
+{
+    boolean found = false;
+    //TODO
+    return found;
+}
+
+uint8_t getBearing()
+{
+   Wire.beginTransmission(CMPS10_ADDR);           //starts communication with CMPS10
+   Wire.send(CMPS10_BEARING_BYTE_REG);                              //Sends the register we wish to start reading from
+   Wire.endTransmission();
+
+   Wire.requestFrom(CMPS10_ADDR, (uint8_t)1);              // Request 1 byte from CMPS10
+   uint8_t bearing;
+   elapsedMillis waiting;     // "waiting" starts at zero
+  while (waiting < 1000) // Wait for bytes to become available
+  {
+    if (Wire.available()) 
+    {
+      bearing = Wire.receive();
+      return(bearing - compassOffset);
+                 
+    }
+  }
+   return 0; //should only be reached if i2c communication fails  
+}
+
+uint16_t getBearingDegrees()
+{
+   Wire.beginTransmission(CMPS10_ADDR);           //starts communication with CMPS10
+   Wire.send(CMPS10_BEARING_DEGREE_HIGH_REG);                              //Sends the register we wish to start reading from
+   Wire.endTransmission();
+
+   Wire.requestFrom(CMPS10_ADDR, (uint8_t)1);              // Request 1 byte from CMPS10
+   uint16_t degree;
+   elapsedMillis waiting;     // "waiting" starts at zero
+  while (waiting < 500) // Wait for bytes to become available
+  {
+    if (Wire.available()) 
+    {
+      degree = Wire.receive(); 
+      degree = degree << 8;
+      waiting = 1001;           // end wait loop
+    }
+  }
+   
+   
+   
+   Wire.beginTransmission(CMPS10_ADDR);           //starts communication with CMPS10
+   Wire.send(CMPS10_BEARING_DEGREE_HIGH_REG);                              //Sends the register we wish to start reading from
+   Wire.endTransmission();
+
+   Wire.requestFrom(CMPS10_ADDR, (uint8_t)1);              // Request 1 byte from CMPS10
+   
+   waiting = 0;     // "waiting" starts at zero
+  while (waiting < 500) // Wait for bytes to become available
+  {
+    if (Wire.available()) 
+    {
+       degree += Wire.receive();  
+       return(degree); 
+      
+    }
+  }   
+	return 0; //should only be reached if i2c communication fails  
+}
+
+int8_t getPitch()
+{
+   Wire.beginTransmission(CMPS10_ADDR);           //starts communication with CMPS10
+   Wire.send(CMPS10_PITCH_REG);                              //Sends the register we wish to start reading from
+   Wire.endTransmission();
+   
+   Wire.requestFrom(CMPS10_ADDR, (uint8_t)1);              // Request 1 byte from CMPS10
+   int8_t pitch;
+   elapsedMillis waiting;     // "waiting" starts at zero
+  while (waiting < 1000) // Wait for bytes to become available
+  {
+    if (Wire.available()) 
+    {
+       pitch = Wire.receive(); 
+       return pitch;
+      waiting = 1001;           // end wait loop
+    }
+  }  
+return 0; //should only be reached if i2c communication fails  
+}
+
+int8_t getRoll()
+{
+   Wire.beginTransmission(CMPS10_ADDR);           //starts communication with CMPS10
+   Wire.send(CMPS10_ROLL_REG);                              //Sends the register we wish to start reading from
+   Wire.endTransmission();
+   
+   Wire.requestFrom(CMPS10_ADDR, (uint8_t)1);              // Request 1 byte from CMPS10
+   int8_t roll;
+   elapsedMillis waiting;     // "waiting" starts at zero
+  while (waiting < 1000) // Wait for bytes to become available
+  {
+    if (Wire.available()) 
+    {
+       roll = Wire.receive();  
+       return(roll);
+      
+    }
+  }    
+return 0; //should only be reached if i2c communication fails  
+}
+
+void zeroCompass()
+{
+    compassOffset = 0;
+    compassOffset = getBearing();  
+}
+
+void printI2Cstatus(uint8_t I2Cstatus)
+{
+		switch (I2Cstatus) 
+		{
+			case 0:
+			  Serial.println("0 Success");
+			  break;
+			case 1:
+			  Serial.println("1 data too long to fit in transmit buffer");
+			  break;
+			case 2:
+			  Serial.println("2 received NACK on transmit of address");
+			  break;
+			case 3:
+			  Serial.println("3 received NACK on transmit of data");
+			  break;
+			case 4:
+			  Serial.println("4 other error");
+			  break;
+			case 255:
+			  Serial.println("255 default transmissionStatus");
+			  break;  
+			default: 
+			  // if nothing else matches, do the default
+			  Serial.print(I2Cstatus);
+			  Serial.println(" unrecognized value ");
+		}
+}
+
+void init()
+	{
+            _transmissionStatus = 255;
+              //TODO write code to load generated character sets from flash(progmem) into LCD
+	}
+	
+void begin()
+	{
+            delay(600);
+            clear();
+            hideCsr();
+            backlightOn();
+    }
+	
+ uint8_t getAddress()
+	{
+			return(LCD03_ADDR);
+	}
+	
+uint8_t getBufferFreeBytes()
+	{  
+			
+			Wire.beginTransmission(LCD03_ADDR);                      // Send byte to read reg
+			Wire.send(LCD03_CMD_REG);
+			Wire.send(LCD03_BUFFER_REMAINING_REG);
+			Wire.endTransmission();
+		        uint8_t freeBytes;
+			Wire.requestFrom(LCD03_ADDR, (uint8_t)1);                         // Request 1 byte 			 
+                        while(Wire.available()) 
+                        {
+			freeBytes = Wire.receive();
+                        }
+			return(freeBytes);
+	}
+	
+uint16_t getKeypadState()
+	{
+			uint16_t keypad;
+			Wire.beginTransmission(LCD03_ADDR);                      // Send byte to read reg
+			Wire.send(LCD03_CMD_REG);
+			Wire.send(LCD03_KEYPAD_HIGH_REG);			
+			Wire.endTransmission();
+		  
+			Wire.requestFrom(LCD03_ADDR, (uint8_t)1);                         // Request HIGH byte from LCD
+                        while(Wire.available()) 
+                        {			
+			keypad = Wire.receive();  // receive high byte 
+                        }
+			keypad = keypad << 8;    // shift high byte to be high 8 bits
+								
+			Wire.beginTransmission(LCD03_ADDR);                      // Send byte to read reg
+			Wire.send(LCD03_CMD_REG);
+			Wire.send(LCD03_KEYPAD_LOW_REG);			
+			Wire.endTransmission();
+		  
+			Wire.requestFrom(LCD03_ADDR, (uint8_t)1);                         // Request LOW byte from LCD
+			
+                        while(Wire.available()) 
+                        {			
+			keypad |= Wire.receive(); // receive low byte as lower 8 bits
+                        }
+			return(keypad); 
+	}
+	
+uint8_t getVersion() //LCD03_VERSION_REG = 3;	
+	{
+			uint16_t version;
+			Wire.beginTransmission(LCD03_ADDR);                      // Send byte to read reg
+			Wire.send(LCD03_CMD_REG);
+			Wire.send(LCD03_VERSION_REG);			
+			Wire.endTransmission();
+		  
+			Wire.requestFrom(LCD03_ADDR, (uint8_t)1);                         // Request version byte from LCD
+			while(Wire.available())
+                        {
+			    version = Wire.receive();  // receive high byte
+                        }
+			return(version);
+	}
+	
+inline void command(uint8_t value) 
+	{	
+			Wire.beginTransmission(LCD03_ADDR);
+			Wire.send(LCD03_CMD_REG);
+			Wire.send(value);
+			_transmissionStatus = Wire.endTransmission();
+			DEBUG_PRINTLN("command transmissionStatus");
+                        DEBUG_I2C(_transmissionStatus);
+	}
+	
+void noop()
+	{
+			Wire.beginTransmission(LCD03_ADDR);
+			Wire.send(LCD03_CMD_REG);
+			Wire.send(LCD03_NULL_CMD);
+			_transmissionStatus = Wire.endTransmission();
+			DEBUG_PRINTLN("noop transmissionStatus");  
+                        DEBUG_I2C(_transmissionStatus);
+	}
+	
+void homeCsr()
+	{
+			Wire.beginTransmission(LCD03_ADDR);
+			Wire.send(LCD03_CMD_REG);
+			Wire.send(LCD03_CURSOR_HOME_CMD);
+			_transmissionStatus = Wire.endTransmission();
+			DEBUG_PRINTLN("homeCsr transmissionStatus");
+                        DEBUG_I2C(_transmissionStatus);
+			 
+	}
+	
+void setCsr(uint8_t position)
+	{
+        if(position >=1 && position <= 80)
+            {
+			Wire.beginTransmission(LCD03_ADDR);
+			Wire.send(LCD03_CMD_REG);
+			Wire.send(LCD03_SET_CURSOR_CMD);
+			Wire.send(position);
+			_transmissionStatus = Wire.endTransmission();
+			DEBUG_PRINTLN("setCsr transmissionStatus");
+                        DEBUG_I2C(_transmissionStatus);
+            }
+	}
+	
+ void setCsrLC(uint8_t line, uint8_t column)
+	{
+        if(line >= 1 && line <=4 && column >= 1 && column <= 20)
+            {
+				Wire.beginTransmission(LCD03_ADDR);
+				Wire.send(LCD03_CMD_REG);
+				Wire.send(LCD03_SET_CURSOR_LC_CMD);
+				Wire.send(line);
+				Wire.send(column);
+				_transmissionStatus = Wire.endTransmission();
+				DEBUG_PRINTLN("setCsrLC transmissionStatus");  
+				DEBUG_I2C(_transmissionStatus);
+            }
+	}
+	
+void hideCsr()
+	{
+		Wire.beginTransmission(LCD03_ADDR);
+		Wire.send(LCD03_CMD_REG);
+		Wire.send(LCD03_HIDE_CURSOR_CMD);
+		_transmissionStatus = Wire.endTransmission();
+		DEBUG_PRINTLN("hideCsr transmissionStatus"); 
+        DEBUG_I2C(_transmissionStatus);
+	}
+	
+void underlineCsr()
+	{
+		Wire.beginTransmission(LCD03_ADDR);
+		Wire.send(LCD03_CMD_REG);
+		Wire.send(LCD03_UNDERLINE_CURSOR_CMD);
+		_transmissionStatus = Wire.endTransmission();
+		DEBUG_PRINTLN("underlineCsr transmissionStatus"); 
+        DEBUG_I2C(_transmissionStatus);
+	}
+	
+void blinkCsr()
+	{
+		Wire.beginTransmission(LCD03_ADDR);
+		Wire.send(LCD03_CMD_REG);
+		Wire.send(LCD03_BLINK_CURSOR_CMD);
+		_transmissionStatus = Wire.endTransmission();
+		DEBUG_PRINTLN("blinkCsr transmissionStatus");
+        DEBUG_I2C(_transmissionStatus);
+	}
+	
+void backspace()
+	{
+		Wire.beginTransmission(LCD03_ADDR);
+		Wire.send(LCD03_CMD_REG);
+		Wire.send(LCD03_BACKSPACE_CMD);
+		_transmissionStatus = Wire.endTransmission();
+		DEBUG_PRINTLN("backspace transmissionStatus");
+        DEBUG_I2C(_transmissionStatus);
+	}
+	
+void tab()
+	{
+		Wire.beginTransmission(LCD03_ADDR);
+		Wire.send(LCD03_CMD_REG);
+		Wire.send(LCD03_TAB_HORIZONTAL_CMD);
+		_transmissionStatus = Wire.endTransmission();
+		DEBUG_PRINTLN("tab transmissionStatus"); 
+        DEBUG_I2C(_transmissionStatus);
+	}
+	
+void down()
+	{
+		Wire.beginTransmission(LCD03_ADDR);
+		Wire.send(LCD03_CMD_REG);
+		Wire.send(LCD03_LINE_FEED_CMD);
+		_transmissionStatus = Wire.endTransmission();
+		DEBUG_PRINTLN("down transmissionStatus");
+        DEBUG_I2C(_transmissionStatus);
+	}
+	
+void up()
+	{
+		Wire.beginTransmission(LCD03_ADDR);
+		Wire.send(LCD03_CMD_REG);
+		Wire.send(LCD03_TAB_VERTICAL_CMD);
+		_transmissionStatus = Wire.endTransmission();
+		DEBUG_PRINTLN("up transmissionStatus");   
+        DEBUG_I2C(_transmissionStatus);
+	}
+	
+void clear()
+	{
+		Wire.beginTransmission(LCD03_ADDR);
+		Wire.send(LCD03_CMD_REG);
+		Wire.send(LCD03_CLEAR_SCREEN_CMD);
+		_transmissionStatus = Wire.endTransmission();
+		DEBUG_PRINTLN("clear transmissionStatus"); 
+        DEBUG_I2C(_transmissionStatus);
+	}
+		//LCD03_CLEAR_SCREEN_CMD = 12;	//Clear screen	Clears the screen and sets cursor to the home position
+		
+void bink()
+	{
+		Wire.beginTransmission(LCD03_ADDR);
+		Wire.send(LCD03_CMD_REG);
+		Wire.send(LCD03_RETURN_CMD);
+		_transmissionStatus = Wire.endTransmission();
+		DEBUG_PRINTLN("bink transmissionStatus");
+        DEBUG_I2C(_transmissionStatus);
+	}
+		//LCD03_RETURN_CMD = 13;	        //Carriage Return	Moves the cursor to the start of the next line
+
+ void clearColumn()
+	{
+		Wire.beginTransmission(LCD03_ADDR);
+		Wire.send(LCD03_CMD_REG);
+		Wire.send(LCD03_CLEAR_COLUMN_CMD);
+		_transmissionStatus = Wire.endTransmission();
+		DEBUG_PRINTLN("clearColumn transmissionStatus");
+        DEBUG_I2C(_transmissionStatus);
+	}
+		//LCD03_CLEAR_COLUMN_CMD = 17;	//Clear Column	Clears the contents of the current column and moves cursor right by one column
+
+void setTab(uint8_t size)
+	{
+		if(size >= 1 && size <=10)
+		{
+			Wire.beginTransmission(LCD03_ADDR);
+			Wire.send(LCD03_CMD_REG);
+			Wire.send(LCD03_SET_TAB_SIZE_CMD);
+			Wire.send(size);
+			_transmissionStatus = Wire.endTransmission();
+			DEBUG_PRINTLN("setTab transmissionStatus");
+            DEBUG_I2C(_transmissionStatus);
+		}
+	}
+		//LCD03_SET_TAB_SIZE_CMD = 18;	//Tab set	Sets the required tab size, the following byte can be a size of between 1 and 10
+		
+void backlightOn()
+	{
+		Wire.beginTransmission(LCD03_ADDR);
+		Wire.send(LCD03_CMD_REG);
+		Wire.send(LCD03_BACKLIGHT_ON_CMD);
+		_transmissionStatus = Wire.endTransmission();
+		DEBUG_PRINTLN("backlightOn transmissionStatus");  
+        DEBUG_I2C(_transmissionStatus);
+	}
+		//LCD03_BACKLIGHT_ON_CMD = 19;	//Backlight on 	Turns the backlight of the LCD03 on
+		
+void backlightOff()
+	{
+		Wire.beginTransmission(LCD03_ADDR);
+		Wire.send(LCD03_CMD_REG);
+		Wire.send(LCD03_BACKLIGHT_OFF_CMD);
+		_transmissionStatus = Wire.endTransmission();
+		DEBUG_PRINTLN("backlightOff transmissionStatus");
+        DEBUG_I2C(_transmissionStatus);
+	}
+		//LCD03_BACKLIGHT_OFF_CMD = 20;	//Backlight off (default)	Turns the backlight of the LCD03 off
+
+void changeAddress(uint8_t newAddress)
+	{
+		//must be run with ONLY the device whose address is to be changed connected to the I2C bus
+		DEBUG_PRINTLN("");                                 DEBUG_I2C(_transmissionStatus);Serial.println("Entered changeI2Caddress function");
+		if(newAddress == 0xC6 || newAddress == 0xC8 || newAddress == 0xCA || newAddress == 0xCC ||newAddress ==  0xCE)//8 bit addresses
+		newAddress = newAddress >> 1;
+		if(newAddress == 0xC6  >> 1 || newAddress == 0xC8  >> 1 || newAddress == 0xCA  >> 1 || newAddress == 0xCC  >> 1 || newAddress ==  0xCE  >> 1)//7 bit addresses
+		{		 
+			 DEBUG_PRINTLN("");                                 DEBUG_I2C(_transmissionStatus);Serial.println("Valid address received");
+			 Wire.beginTransmission(LCD03_ADDR);
+			 Wire.send(LCD03_CMD_REG);
+			 Wire.send(LCD03_CHANGE_ADDR_CMD);    
+			 _transmissionStatus = Wire.endTransmission();
+			 DEBUG_PRINTLN("Address change command sent");                                 \
+                         DEBUG_I2C(_transmissionStatus);
+			 delay(10);
+			 
+			 Wire.beginTransmission(LCD03_ADDR);
+			 Wire.send(LCD03_CMD_REG);
+			 Wire.send(0x19);    
+			 _transmissionStatus = Wire.endTransmission();
+			 DEBUG_PRINTLN("First byte sent"); 
+                         DEBUG_I2C(_transmissionStatus);
+			 delay(10);
+			 
+			 Wire.beginTransmission(LCD03_ADDR);
+			 Wire.send(LCD03_CMD_REG);
+			 Wire.send(0xA0);   
+			 _transmissionStatus = Wire.endTransmission();
+			 DEBUG_PRINTLN("Second byte sent");
+                         DEBUG_I2C(_transmissionStatus);
+			 delay(10);
+			 
+			 Wire.beginTransmission(LCD03_ADDR);
+			 Wire.send(LCD03_CMD_REG);
+			 Wire.send(0xAA);   
+			 _transmissionStatus = Wire.endTransmission();
+			 DEBUG_PRINTLN("Third byte sent");
+                         DEBUG_I2C(_transmissionStatus);
+			 delay(10);
+			 
+			 Wire.beginTransmission(LCD03_ADDR);
+			 Wire.send(LCD03_CMD_REG);
+			 Wire.send(0xA5);   
+			 _transmissionStatus = Wire.endTransmission();
+			 DEBUG_PRINTLN("Fourth byte sent");
+                         DEBUG_I2C(_transmissionStatus);
+			 delay(10);
+			 
+			 Wire.beginTransmission(LCD03_ADDR);
+			 Wire.send(LCD03_CMD_REG);
+			 Wire.send(newAddress); 
+			 _transmissionStatus = Wire.endTransmission();
+			 DEBUG_PRINTLN("New address sent");
+                         DEBUG_I2C(_transmissionStatus);
+			 delay(1000);
+			 DEBUG_PRINT("Attention! Be sure to change code constant LCD03_ADDR to equal ");
+			 DEBUG_PRINTLN(newAddress);
+                         DEBUG_PRINTLN("Leaving changeAddress function");
+		}
+			else
+			DEBUG_PRINTLN("Invalid address received");
+				//LCD03_CHANGE_ADDR_CMD = 25;     //First byte of sequence to change LCD03 address (see changing address, software V4+)       
+			//Version 4 and above of the LCD03 software contains the facility to easily change the modules address on the I2C bus system in the range of 0xC6 - 0xCE ( even numbers only ). This is achieved by sending the following sequence:
+			//0x19     ( 1st byte of change address command )
+			//0xA0     ( 2nd byte of change address command )
+			//0xAA     ( 3rd byte of change address command )
+			//0xA5     ( 4th byte of change address command )
+			//0xC6, 0xC8,0xCA,0xCC or 0xCE    ( new address to map LCD03 at )
+			//Version 4+ also displays the current address on the display every time the module is first powered
+	}
+	
+void keyscan20Hz()
+	{
+		Wire.beginTransmission(LCD03_ADDR);
+		Wire.send(LCD03_CMD_REG);
+		Wire.send(LCD03_KEYSCAN_20HZ_CMD);
+		_transmissionStatus = Wire.endTransmission();
+		DEBUG_PRINTLN("keyscan20Hz transmissionStatus"); 
+        DEBUG_I2C(_transmissionStatus);
+	}
+	
+void keyscan10Hz()
+	{
+		Wire.beginTransmission(LCD03_ADDR);
+		Wire.send(LCD03_CMD_REG);
+		Wire.send(LCD03_KEYSCAN_10HZ_CMD);
+		_transmissionStatus = Wire.endTransmission();
+		DEBUG_PRINTLN("keyscan10Hz transmissionStatus");
+        DEBUG_I2C(_transmissionStatus);
+	}
+	
+void printToASCIIvalue(const char character)
+	{
+		if((int)character >= 32 && (int)character <= 255)//valid printable character
+		{
+			Wire.beginTransmission(LCD03_ADDR);
+			Wire.send(LCD03_CMD_REG);
+			Wire.send('character');
+			Wire.endTransmission();                              
+		}
+        else
+        {
+            Wire.beginTransmission(LCD03_ADDR);
+			Wire.send(LCD03_CMD_REG);
+			Wire.send('?');
+			Wire.endTransmission();
+        }		
+	}
+void printFromASCIIvalue(uint8_t characterValue)
+	{	
+    if(characterValue >= 32 && characterValue <= 255)//valid printable character
+		{
+			Wire.beginTransmission(LCD03_ADDR);
+			Wire.send(LCD03_CMD_REG);
+			Wire.send(characterValue);
+			Wire.endTransmission();                              
+		}
+	}
+	
+inline size_t write(unsigned char character)
+    {
+        Wire.beginTransmission(LCD03_ADDR);
+		Wire.send(LCD03_CMD_REG);
+		Wire.send(character);
+		Wire.endTransmission();
+        delay(1);
+        return 1; // assume sucess
+    }
+	
+inline size_t write(const char *buffer, size_t size)
+    {
+        uint8_t freeBytes = getBufferFreeBytes();  
+            if(size > freeBytes)
+            {
+                size_t count = 0;
+               	while (size--)
+                {
+                    count += write(*buffer++);
+                }
+                return count;
+                Wire.beginTransmission(LCD03_ADDR);
+				Wire.send(LCD03_CMD_REG);
+                for(uint8_t i = 0; i < freeBytes; i++)
+                {                         
+					Wire.send(buffer[i]);
+                }
+                Wire.endTransmission();
+                return freeBytes;
+            }
+			else                  
+            {
+                Wire.beginTransmission(LCD03_ADDR);
+    		    Wire.send(LCD03_CMD_REG);
+                for(uint8_t i = 0; i < size; i++)
+                {
+    		        Wire.send(buffer[i]);
+                }                      
+				Wire.endTransmission();
+                return size; 
+            }
+    }
+	
+private:
+    uint8_t _transmissionStatus;
+    void _printI2Cstatus()
+	{
+		switch (_transmissionStatus) 
+		{
+			case 0:
+			  Serial.println("0 Success");
+			  break;
+			case 1:
+			  Serial.println("1 data too long to fit in transmit buffer");
+			  break;
+			case 2:
+			  Serial.println("2 received NACK on transmit of address");
+			  break;
+			case 3:
+			  Serial.println("3 received NACK on transmit of data");
+			  break;
+			case 4:
+			  Serial.println("4 other error");
+			  break;
+			case 255:
+			  Serial.println("255 initialized but unchanged transmissionStatus");
+			  break;  
+			default: 
+			  // if nothing else matches
+			  Serial.print(_transmissionStatus);
+			  Serial.println(" unrecognized value ");
+		}
+	}
+	
+void testLCD1()
+{
+    lcd.clear();
+    uint8_t j = 1;
+    for(uint8_t i = 32; i <= 255; i++)
+    {
+        delay(1);
+        lcd.setCsr(j);
+        j++;
+        if(j == 81)
+        j = 1;
+        if(i == 255)
+        i = 32;
+        delay(1);
+        lcd.printFromASCIIvalue(i);
+    }
+}
+
+void testLCD2()
+{
+    lcd.clear();
+    lcd.homeCsr();
+    int i;
+    //row 1
+    for(i = 1; i <=20; i++)
+    {
+        lcd.setCsr(i);
+        lcd.write(1);
+    }
+    //row 2        
+    for(i = 21; i <=40; i++)
+    {
+        lcd.setCsr(i);
+        lcd.write(2);
+    }
+    //row 3        
+    for(i = 31; i <=60; i++)
+    {
+        lcd.setCsr(i);
+        lcd.write(3);
+    }
+    //row 4        
+    for(i = 41; i <=80; i++)
+    {
+        lcd.setCsr(i);
+        lcd.write(4);
+    }
+}
+
+void  displayTask()
+{//  Next task, Last task measurement, Last task direction, color, side of course
+  lcd.clear();
+  lcd.setCsrLC(1, 1);//lcd.setCsrLC(0, 8);                     //move cursor to first line 
+  lcd.print("Next Task: "); 
+  
+}
+
+void  displayTemperatures()
+{// ambient temp, temp Array
+    lcd.clear();
+    lcd.print("Ambient: ");
+    lcd.print(getAmbient(), DEC);
+    lcd.print(" T1: ");
+    lcd.println(getTemperaturePixel(1), DEC);
+    lcd.print("T2: ");
+    lcd.print(getTemperaturePixel(2), DEC);
+    lcd.print(" T3: ");
+    lcd.print(getTemperaturePixel(3), DEC);
+    lcd.println(" T4: ");
+    lcd.print(getTemperaturePixel(4), DEC);
+    lcd.print("T5: ");
+    lcd.print(getTemperaturePixel(5), DEC);
+    lcd.print(" T6:");
+    lcd.print(getTemperaturePixel(6), DEC);
+    lcd.print(" T7:");
+    lcd.print(getTemperaturePixel(7), DEC);
+    lcd.print(" T8:");
+    lcd.print(getTemperaturePixel(8), DEC);
+}
+
+void displayWheelSpeeds()
+{
+  lcd.clear();
+  lcd.setCsrLC(1, 1);//lcd.setCsrLC(0, 8);                     //move cursor to first line 
+  lcd.print("LF Speed: "); 
+  lcd.print(wheelSpeed[LF], DEC);                       
+  lcd.setCsrLC(2, 1);// lcd.setCsrLC(1, 0);                  //move cursor to second line 
+  lcd.print("RF Speed: ");
+  lcd.print(wheelSpeed[RF], DEC);                       
+  lcd.setCsrLC(3, 1);// lcd.setCsrLC(1, 16);                //move cursor to second line
+  lcd.print("LR Speed: "); 
+  lcd.print(wheelSpeed[LR], DEC);                       
+  lcd.setCsrLC(4, 1);//lcd.setCsrLC(2, 8);                  //move cursor to third line 
+  lcd.print("RR Speed: ");
+  lcd.print(wheelSpeed[RR], DEC);
+}
+
+void displayWheelEncoders()
+{
+  lcd.clear();
+  lcd.setCsrLC(1, 1);//lcd.setCsrLC(0, 8);                     //move cursor to first line 
+  lcd.print("LF count:"); 
+  lcd.print(getEncoderCount(LF), DEC);                       
+  lcd.setCsrLC(2, 1);// lcd.setCsrLC(1, 0);                  //move cursor to second line 
+  lcd.print("RF count:");
+  lcd.print(getEncoderCount(RF), DEC);                       
+  lcd.setCsrLC(3, 1);// lcd.setCsrLC(1, 16);                //move cursor to second line
+  lcd.print("LR count:"); 
+  lcd.print(getEncoderCount(LR), DEC);                       
+  lcd.setCsrLC(4, 1);//lcd.setCsrLC(2, 8);                  //move cursor to third line 
+  lcd.print("RR count:");
+  lcd.print(getEncoderCount(RR), DEC);                        
+
+}
+
+void displaySonars()
+{
+  lcd.clear();
+  lcd.setCsrLC(1, 8);
+  lcd.print("Sonar");
+  lcd.setCsrLC(2, 8);//lcd.setCsrLC(0, 8);                         //move cursor to first line, 8th column  
+  lcd.print(getDistanceToFrontObject(), DEC);                       // distance to front object in number of wheel degrees
+  lcd.setCsrLC(3, 1);// lcd.setCsrLC(1, 0);                                        //move cursor to second line, 1st column  
+  lcd.print(getDistanceToLeftObject(), DEC);                       // distance to left object in number of wheel degrees
+  lcd.setCsrLC(3, 16);// lcd.setCsrLC(1, 16);                                        //move cursor to second line, 16th column  
+  lcd.print(getDistanceToRightObject(), DEC);                       // distance to right object in number of wheel degrees
+  lcd.setCsrLC(4, 8);//lcd.setCsrLC(2, 8);                                        //move cursor to third line, 8th column  
+  lcd.print(getDistanceToRearObject(), DEC);                       // distance to rear object in number of wheel degrees  
+}
+
+void displayWheelCurrents()
+{
+  lcd.clear();
+  lcd.setCsrLC(1, 1);//lcd.setCsrLC(0, 8);                     //move cursor to first line 
+  lcd.print("LF current: "); 
+  lcd.print(getWheelCurrent(LF), DEC);                       
+  lcd.setCsrLC(2, 1);// lcd.setCsrLC(1, 0);                  //move cursor to second line 
+  lcd.print("RF current: ");
+  lcd.print(getWheelCurrent(RF), DEC);                       
+  lcd.setCsrLC(3, 1);// lcd.setCsrLC(1, 16);                //move cursor to second line
+  lcd.print("LR current: "); 
+  lcd.print(getWheelCurrent(LR), DEC);                       
+  lcd.setCsrLC(4, 1);//lcd.setCsrLC(2, 8);                  //move cursor to third line 
+  lcd.print("RR current: ");
+  lcd.print(getWheelCurrent(RR), DEC);                        
+}
+
+void displayVolts()
+{
+    lcd.clear();
+  uint8_t batteryVolts = getVolts(FRONT_MD25_ADDR);      //get the voltage reading of the front motor controller
+  lcd.setCsrLC(1, 1);   // lcd.setCsrLC(0, 0);                                        //move cursor to first line, first column
+  lcd.print("Batt Volts: ");
+  lcd.print(batteryVolts/10, DEC);                       // Print batery volts / 10 to give you the number of whole volts
+  lcd.print(".");                                        // As arduino has truncates floating point numbers we print a . here to act as a decimal point
+  lcd.print(batteryVolts%10, DEC);                       // Prints Battery volts % 10 to give us the 
+}
+
+void displayCompass()
+{
+    lcd.clear();
+  uint16_t degrees = getBearingDegrees();      
+  lcd.setCsrLC(2, 1);                                          
+  lcd.print("Heading; ");
+  lcd.print(degrees/10, DEC);                       
+  lcd.print(".");                                        
+  lcd.print(degrees%10, DEC);                       
+  degrees = getBearing();
+  if(degrees > NORTHEAST_HEADING && degrees < NORTHWEST_HEADING)
+  {// north
+      lcd.setCsrLC(3, 1);
+      lcd.print("North");
+  }
+  else if(degrees > SOUTHWEST_HEADING && degrees < SOUTHEAST_HEADING)
+  {// south
+      lcd.setCsrLC(3, 1);
+      lcd.print("South");
+  }
+  else if(degrees <= SOUTHWEST_HEADING && degrees >= NORTHWEST_HEADING)
+  {// west
+      lcd.setCsrLC(3, 1);
+      lcd.print("West");
+  }
+  else 
+  {// east
+      lcd.setCsrLC(3, 1);
+      lcd.print("East");
+  }
+  
+}
+
+void LCDdisplay()
+{   
+      if (sinceDisplayCompass >= (DISPLAY_INTERVAL * NUM_DISPLAY_SCREENS)) // 1 screen
+      {// battery volts, compass direction
+        sinceDisplayCompass = sinceDisplayCompass - (DISPLAY_INTERVAL * NUM_DISPLAY_SCREENS);
+        displayVolts();
+        displayCompass();
+      }
+      if (sinceDisplayWheelSpeeds >= (DISPLAY_INTERVAL * NUM_DISPLAY_SCREENS)) // 2 screens
+      {
+        sinceDisplayWheelSpeeds = sinceDisplayWheelSpeeds - (DISPLAY_INTERVAL * NUM_DISPLAY_SCREENS);
+        displayWheelSpeeds();
+      }
+      if (sinceDisplayWheelCurrents >= (DISPLAY_INTERVAL * NUM_DISPLAY_SCREENS)) // 3 screens
+      {
+        sinceDisplayWheelCurrents = sinceDisplayWheelCurrents - (DISPLAY_INTERVAL * NUM_DISPLAY_SCREENS);
+        displayWheelCurrents();
+      }
+      if (sinceDisplaySonars >= (DISPLAY_INTERVAL * NUM_DISPLAY_SCREENS)) // 4 screens
+      {
+        sinceDisplaySonars = sinceDisplaySonars - (DISPLAY_INTERVAL * NUM_DISPLAY_SCREENS);
+        displaySonars();
+      }      
+      if (sinceDisplayWheelEncoders >= (DISPLAY_INTERVAL * NUM_DISPLAY_SCREENS)) // 5 screens
+      {
+        sinceDisplayWheelEncoders = sinceDisplayWheelEncoders - (DISPLAY_INTERVAL * NUM_DISPLAY_SCREENS);
+        displayWheelEncoders();
+      }
+      if (sinceDisplayTemperatures >= (DISPLAY_INTERVAL * NUM_DISPLAY_SCREENS)) // 6 screens
+      {
+        sinceDisplayTemperatures = sinceDisplayTemperatures - (DISPLAY_INTERVAL * NUM_DISPLAY_SCREENS);
+        displayTemperatures();
+      }     
+      if (sinceDisplayTask >= (DISPLAY_INTERVAL * NUM_DISPLAY_SCREENS)) // 7 screens
+      {
+        sinceDisplayTask = sinceDisplayTask - (DISPLAY_INTERVAL * NUM_DISPLAY_SCREENS);
+        displayTask();
+      }      
+}
+
+void setAutoSpeedRegulationOn(uint8_t MD25address)
+{
+     Wire.beginTransmission(MD25address);
+     Wire.send(MD25_CMD_REG);
+     Wire.send(MD25_ENABLE_AUTO_SPEEDREG_CMD);   
+     Wire.endTransmission();     
+}
+
+void setAutoSpeedRegulationOff(uint8_t MD25address)
+{
+    Wire.beginTransmission(MD25address);
+     Wire.send(MD25_CMD_REG);
+     Wire.send(MD25_DISABLE_AUTO_SPEEDREG_CMD);   
+     Wire.endTransmission();
+}
+  
+void setTimeoutOn(uint8_t MD25address)
+{
+     Wire.beginTransmission(MD25address);
+     Wire.send(MD25_CMD_REG);
+     Wire.send(MD25_ENABLE_TIMEOUT_CMD);   
+     Wire.endTransmission();    
+}  
+
+void setTimeoutOff(uint8_t MD25address)
+{
+    Wire.beginTransmission(MD25address);
+     Wire.send(MD25_CMD_REG);
+     Wire.send(MD25_DISABLE_TIMEOUT_CMD);   
+     Wire.endTransmission();
+}
+  
+int32_t getEncoderCount(Wheel_t wheel)
+{        
+	int32_t count = 0; 
+	switch (wheel) 
+	{
+		case LF:
+			Wire.beginTransmission(FRONT_MD25_ADDR);                      // Send byte to get a reading from encoder                  
+			Wire.send(MD25_LEFT_ENCODER_A_REG);
+			Wire.endTransmission();
+			Wire.requestFrom(FRONT_MD25_ADDR, (uint8_t)4);                         // Request 4 bytes from MD25     
+			break;
+		case RF:
+			Wire.beginTransmission(FRONT_MD25_ADDR);                      // Send byte to get a reading from encoder                   
+			Wire.send(MD25_RIGHT_ENCODER_A_REG);
+			Wire.endTransmission();
+			Wire.requestFrom(FRONT_MD25_ADDR, (uint8_t)4);                         // Request 4 bytes from MD25  
+			break;
+		case LR:
+			Wire.beginTransmission(REAR_MD25_ADDR);                      // Send byte to get a reading from encoder                  
+			Wire.send(MD25_LEFT_ENCODER_A_REG);
+			Wire.endTransmission();
+			Wire.requestFrom(REAR_MD25_ADDR, (uint8_t)4);                         // Request 4 bytes from MD25  
+			break;
+		case RR:
+			Wire.beginTransmission(REAR_MD25_ADDR);                      // Send byte to get a reading from encoder                  
+			Wire.send(MD25_RIGHT_ENCODER_A_REG);
+			Wire.endTransmission();
+			Wire.requestFrom(REAR_MD25_ADDR, (uint8_t)4);                         // Request 4 bytes from MD25    
+			break;
+	}   
+	while(Wire.available() < 4);                              // Wait for 4 bytes to become available
+    
+    count = Wire.receive();                                 // First byte for encoder 1, HH.
+    count <<= 8;
+    count += Wire.receive();                                     // Second byte for encoder 1, HL
+    count <<= 8;
+    count += Wire.receive();                                     // Third byte for encoder 1, LH
+    count <<= 8;
+    count  +=Wire.receive();                                     // Fourth byte for encoder 1, LL
+  return(count);                                            // Returns encoder position as a long
+}
+
+uint8_t getWheelCurrent(Wheel_t wheel)
+{
+	uint8_t current = -1;
+	switch (wheel) 
+	{	
+	case LF:
+		Wire.beginTransmission(FRONT_MD25_ADDR);                      // Send byte to read current
+		Wire.send(MD25_LEFT_MOTOR_CURRENT_REG);
+		Wire.endTransmission();
+		Wire.requestFrom(FRONT_MD25_ADDR, (uint8_t)1);                         // Request 1 byte form MD25
+		while(Wire.available() < 1);                              // Wait for byte to arrive 
+		current = Wire.receive();                        // Get byte
+		break;
+	case RF:
+		Wire.beginTransmission(FRONT_MD25_ADDR);                      // Send byte to read current
+		Wire.send(MD25_RIGHT_MOTOR_CURRENT_REG);
+		Wire.endTransmission();
+		Wire.requestFrom(FRONT_MD25_ADDR, (uint8_t)1);                         // Request 1 byte form MD25
+		while(Wire.available() < 1);                              // Wait for byte to arrive 
+		current = Wire.receive();                        // Get byte
+		break;
+	case LR:
+		Wire.beginTransmission(REAR_MD25_ADDR);                      // Send byte to read current
+		Wire.send(MD25_LEFT_MOTOR_CURRENT_REG);
+		Wire.endTransmission();
+		Wire.requestFrom(REAR_MD25_ADDR, (uint8_t)1);                         // Request 1 byte form MD25
+		while(Wire.available() < 1);                              // Wait for byte to arrive 
+		current = Wire.receive();                        // Get byte
+		break;
+	case RR:
+		Wire.beginTransmission(REAR_MD25_ADDR);                      // Send byte to read current
+		Wire.send(MD25_RIGHT_MOTOR_CURRENT_REG);
+		Wire.endTransmission();
+		Wire.requestFrom(REAR_MD25_ADDR, (uint8_t)1);                         // Request 1 byte form MD25
+		while(Wire.available() < 1);                              // Wait for byte to arrive 
+		current = Wire.receive();                        // Get byte
+		break;    
+	}
+	return(current);
+}
+
+uint8_t getVolts(uint8_t MD25address)
+{                                               // Function to read and display battery volts as a single byte
+  Wire.beginTransmission(MD25address);                      // Send byte to read volts
+  Wire.send(MD25_BATTERY_VOLTS_REG);
+  Wire.endTransmission();
+  
+  Wire.requestFrom(MD25address, (uint8_t)1);                         // Request 1 byte form MD25
+  while(Wire.available() < 1);                              // Wait for byte to arrive 
+  uint8_t batteryVolts = Wire.receive();                        // Get byte
+  return(batteryVolts);
+}
+
+void encoderReset()
+{                                         // This function resets ALL encoder values to 0
+  Wire.beginTransmission(FRONT_MD25_ADDR);
+  Wire.send(MD25_CMD_REG);
+  Wire.send(MD25_ENCODER_RESET_CMD);                                          // Putting the value 0x20 to reset encoders
+  Wire.endTransmission(); 
+  
+  Wire.beginTransmission(REAR_MD25_ADDR);
+  Wire.send(MD25_CMD_REG);
+  Wire.send(MD25_ENCODER_RESET_CMD);                                          // Putting the value 0x20 to reset encoders
+  Wire.endTransmission(); 
+}
+
+int8_t getMD25SpeedByteFormat(uint8_t MD25address)
+{
+  int8_t mode = -1;
+  Wire.beginTransmission(MD25address);                      // Send byte to read mode
+  Wire.send(MD25_MODE_REG);
+  Wire.endTransmission();
+  
+  Wire.requestFrom(MD25address, (uint8_t)1);                         // Request 1 byte form MD25
+  while(Wire.available() < 1);                              // Wait for byte to arrive 
+  mode = Wire.receive();
+  return(mode);
+}
+
+void setMD25SpeedByteFormat(uint8_t MD25address, uint8_t mode)
+{
+     Wire.beginTransmission(MD25address);
+     Wire.send(MD25_MODE_REG);
+     Wire.send(mode);    
+     Wire.endTransmission();
+    /*
+    The SpeedByteFormat(mode) register selects which mode of operation and I2C data input type the user requires. The options being:
+    0, unsigned bytes, speed1 speed2;   (Default Setting) If a value of 0 is written to the mode register then the meaning of the speed registers is literal speeds in the range of 0 (Full Reverse)  128 (Stop)   255 (Full Forward).
+
+    1,  signed bytes, speed1 speed2;  Mode 1 is similar to Mode 0, except that the speed registers are interpreted as signed values. The meaning of the speed registers is literal speeds in the range of -128 (Full Reverse)   0 (Stop)   127 (Full Forward).
+
+    2,  unsigned bytes, speed steer;  Writing a value of  2 to the mode register will make speed1 control both motors speed, and speed2 becomes the turn value. 
+    Data is in the range of 0 (Full Reverse)  128 (Stop)  255 (Full  Forward).
+
+    3,  signed bytes, speed steer;  Mode 3 is similar to Mode 2, except that the speed registers are interpreted as signed values. 
+    Data is in the range of -128  (Full Reverse)  0 (Stop)   127 (Full Forward)
+    */
+}
+
+int16_t getWheelSpeed(Wheel_t wheel)
+{ 
+	int8_t wheelSpeed = 0; 
+	switch (wheel) 
+    {
+		case LF:
+			Wire.beginTransmission(FRONT_MD25_ADDR);                      // Send byte to read wheelSpeed
+			Wire.send(MD25_LEFT_SPEED_REG);
+			Wire.endTransmission();
+			Wire.requestFrom(FRONT_MD25_ADDR, (uint8_t)1);                         // Request 1 byte form MD25
+			while(Wire.available() < 1);                              // Wait for byte to arrive 
+			wheelSpeed = Wire.receive();                        // Get byte
+			break;
+		case RF:
+			Wire.beginTransmission(FRONT_MD25_ADDR);                      // Send byte to read wheelSpeed
+			Wire.send(MD25_RIGHT_SPEED_REG);
+			Wire.endTransmission();
+			Wire.requestFrom(FRONT_MD25_ADDR, (uint8_t)1);                         // Request 1 byte form MD25
+			while(Wire.available() < 1);                              // Wait for byte to arrive 
+			wheelSpeed = Wire.receive();                        // Get byte
+			break;
+		case LR:
+			Wire.beginTransmission(REAR_MD25_ADDR);                      // Send byte to read wheelSpeed
+			Wire.send(MD25_LEFT_SPEED_REG);
+			Wire.endTransmission();
+			Wire.requestFrom(REAR_MD25_ADDR, (uint8_t)1);                         // Request 1 byte form MD25
+			while(Wire.available() < 1);                              // Wait for byte to arrive 
+			wheelSpeed = Wire.receive();                        // Get byte
+			break;
+		case RR:
+			Wire.beginTransmission(REAR_MD25_ADDR);                      // Send byte to read wheelSpeed
+			Wire.send(MD25_RIGHT_SPEED_REG);
+			Wire.endTransmission();
+			Wire.requestFrom(REAR_MD25_ADDR, (uint8_t)1);                         // Request 1 byte form MD25
+			while(Wire.available() < 1);                              // Wait for byte to arrive 
+			wheelSpeed = Wire.receive();                        // Get byte
+			break;    
+	}
+	return(wheelSpeed);
+}
+
+void setWheelSpeed(Wheel_t wheel, int16_t speed)// safest, slightly slower response due to mode checking.  does not assume any SpeedByteFormat or valid data, checks everything.
+{
+    uint8_t mode;
+    if(wheel == LF || wheel == RF)
+    {
+        mode = getMD25SpeedByteFormat(FRONT_MD25_ADDR);
+        if(( (1 == mode || 3 == mode) && (speed >= -127 && speed <= 127) )||( (0 == mode || 2 == mode) && (speed >= 0 && speed <= 255) ))//valid range
+        {
+            Wire.beginTransmission(FRONT_MD25_ADDR);
+            if(wheel == LF)
+            {
+                wheelSpeed[LF] = speed;
+                Wire.send(MD25_LEFT_SPEED_REG);
+            }
+            else 
+            {
+                wheelSpeed[RF] = speed;
+                Wire.send(MD25_RIGHT_SPEED_REG);
+            }
+            Wire.send(speed);                                  
+            Wire.endTransmission();        
+        }
+    }
+    else if(wheel == LR || wheel == RR)
+    {
+        mode = getMD25SpeedByteFormat(REAR_MD25_ADDR);
+        if(( (1 == mode || 3 == mode) && (speed >= -127 && speed <= 127) )||( (0 == mode || 2 == mode) && (speed >= 0 && speed <= 255) ))//valid range
+        {
+            Wire.beginTransmission(REAR_MD25_ADDR);
+            if(wheel == LR)
+            {
+                wheelSpeed[LR] = speed;
+                Wire.send(MD25_LEFT_SPEED_REG);
+            }
+            else 
+            {
+                wheelSpeed[RR] = speed;
+                Wire.send(MD25_RIGHT_SPEED_REG);
+            }
+            Wire.send(speed);                                  
+            Wire.endTransmission();
+        }
+    }
+}
+
+void drive4wheelSpeeds(int16_t speedArray[])
+{  
+    // Function to DRIVE motors
+  Wire.beginTransmission(FRONT_MD25_ADDR);
+  Wire.send(MD25_LEFT_SPEED_REG);
+  Wire.send(speedArray[LF]);                                  
+  Wire.endTransmission();
+  
+  Wire.beginTransmission(FRONT_MD25_ADDR);
+  Wire.send(MD25_RIGHT_SPEED_REG);
+  Wire.send(speedArray[RF]);                                          
+  Wire.endTransmission();
+  
+  Wire.beginTransmission(REAR_MD25_ADDR);
+  Wire.send(MD25_LEFT_SPEED_REG);
+  Wire.send(speedArray[LR]);                                  
+  Wire.endTransmission();
+  
+  Wire.beginTransmission(REAR_MD25_ADDR);
+  Wire.send(MD25_RIGHT_SPEED_REG);
+  Wire.send(speedArray[RR]);                                          
+  Wire.endTransmission();
+}
+
+void driveWheelSpeed(Wheel_t wheel, int16_t speed)// fast, potentially unsafe.  does not validate data.
+{
+  switch (wheel) 
+    {
+		case LF:
+			wheelSpeed[LF] = speed;
+			Wire.beginTransmission(FRONT_MD25_ADDR);
+			Wire.send(MD25_LEFT_SPEED_REG);
+			Wire.send(speed);                                  
+			Wire.endTransmission();
+			break;
+		case RF:
+			wheelSpeed[RF] = speed;
+			Wire.beginTransmission(FRONT_MD25_ADDR);
+			Wire.send(MD25_RIGHT_SPEED_REG);
+			Wire.send(speed);                                  
+			Wire.endTransmission();
+			break;
+		case LR:
+			wheelSpeed[LR] = speed;
+			Wire.beginTransmission(REAR_MD25_ADDR);
+			Wire.send(MD25_LEFT_SPEED_REG);
+			Wire.send(speed);                                  
+			Wire.endTransmission();    
+			break;
+		case RR:
+			wheelSpeed[RR] = speed;
+			Wire.beginTransmission(REAR_MD25_ADDR);
+			Wire.send(MD25_RIGHT_SPEED_REG);
+			Wire.send(speed);                                  
+			Wire.endTransmission();
+			break;
+	}
+}
+
+void drive4wheelSpeeds(int16_t LFspeed, int16_t RFspeed, int16_t LRspeed, int16_t RRspeed)
+{  //update array
+    wheelSpeed[LF] = LFspeed;
+    wheelSpeed[RF] = RFspeed;
+    wheelSpeed[LR] = LRspeed;
+    wheelSpeed[RR] = RRspeed;
+    // Function to DRIVE motors
+    drive4wheelSpeeds(wheelSpeed);
+}  
+
+
+
+
+void fullStop()
+{
+  // paste the following 2 lines into global area, then uncomment
+  //int8_t frontSpeedByteFormat = -1;
+  //int8_t rearSpeedByteFormat = -1;
+  
+  //paste the following 2 lines into setup()following Wire.begin(); then uncomment
+  //frontMode = getMD25mode(FRONT_MD25_ADDR);
+  //rearMode = getMD25mode(REAR_MD25_ADDR);
+  
+  // the next line in setup() should call fullStop();
+  
+  if(0 == getMD25SpeedByteFormat(FRONT_MD25_ADDR) || 2 == getMD25SpeedByteFormat(FRONT_MD25_ADDR))
+    {   
+        // Function to stop motors
+      Wire.beginTransmission(FRONT_MD25_ADDR);
+      Wire.send(MD25_LEFT_SPEED_REG);
+      Wire.send(128);                                  
+      Wire.endTransmission();
+      
+      Wire.beginTransmission(FRONT_MD25_ADDR);
+      Wire.send(MD25_RIGHT_SPEED_REG);
+      Wire.send(128);                                          
+      Wire.endTransmission();
+    }
+  else if(1 == getMD25SpeedByteFormat(FRONT_MD25_ADDR) || 3 == getMD25SpeedByteFormat(FRONT_MD25_ADDR))  
+    {  
+        // Function to stop motors
+      Wire.beginTransmission(FRONT_MD25_ADDR);
+      Wire.send(MD25_LEFT_SPEED_REG);
+      Wire.send(0);                                  
+      Wire.endTransmission();
+      
+      Wire.beginTransmission(FRONT_MD25_ADDR);
+      Wire.send(MD25_RIGHT_SPEED_REG);
+      Wire.send(0);                                          
+      Wire.endTransmission();
+    }
+    
+  
+  if(0 == getMD25SpeedByteFormat(REAR_MD25_ADDR) || 2 == getMD25SpeedByteFormat(REAR_MD25_ADDR))
+    { 
+      Wire.beginTransmission(REAR_MD25_ADDR);
+      Wire.send(MD25_LEFT_SPEED_REG);
+      Wire.send(128);                                  
+      Wire.endTransmission();
+      
+      Wire.beginTransmission(REAR_MD25_ADDR);
+      Wire.send(MD25_RIGHT_SPEED_REG);
+      Wire.send(128);                                          
+      Wire.endTransmission();
+    }    
+  else if(1 == getMD25SpeedByteFormat(REAR_MD25_ADDR) || 3 == getMD25SpeedByteFormat(REAR_MD25_ADDR))
+	{
+      Wire.beginTransmission(REAR_MD25_ADDR);
+      Wire.send(MD25_LEFT_SPEED_REG);
+      Wire.send(0);                                  
+      Wire.endTransmission();
+      
+      Wire.beginTransmission(REAR_MD25_ADDR);
+      Wire.send(MD25_RIGHT_SPEED_REG);
+      Wire.send(0);                                          
+      Wire.endTransmission();
+    }
+}  
+
+uint8_t getVersion(uint8_t device7bitAddress, uint8_t deviceVersionRegister)
+{           // Function that gets the software version
+  Wire.beginTransmission(device7bitAddress);               // Send byte to read software version as a single byte
+  Wire.send(deviceVersionRegister);
+  Wire.endTransmission();
+  
+  Wire.requestFrom(device7bitAddress, (uint8_t)1);                   // request 1 byte from device
+  while(Wire.available() < 1);                              // Wait for it to arrive
+  uint8_t version = Wire.receive();                         // Read it in
+  return(version);
+}
+
+
+void changeI2Caddress(uint8_t oldAddress, uint8_t newAddress, uint8_t commandRegister, uint8_t commandDelay) //must be run with ONLY the device whose address is to be changed connected to the I2C bus
+{
+  /*
+  example: changeI2Caddress(0x58, 0xB4, 16, 5); //change default md25 address 
+  example: changeI2Caddress(0x60, 0xC4, 22, 5); //change default cmps10 address
+  example: changeI2Caddress(0x60, 0xC4, 0, 100); //change default tpa81 address
+  */
+    uint8_t transmissionStatus = -1;
+    Wire.beginTransmission(oldAddress);
+    Wire.send(commandRegister);
+    Wire.send(0xA0);    // also tried changing this arguement to 160
+    transmissionStatus = Wire.endTransmission();
+    delay(commandDelay + 1);
+     
+    Wire.beginTransmission(oldAddress);
+    Wire.send(commandRegister);
+    Wire.send(0xAA);    // also tried changing this arguement to 170
+    transmissionStatus = Wire.endTransmission();
+    delay(commandDelay + 1);
+     
+    Wire.beginTransmission(oldAddress);
+    Wire.send(commandRegister);
+    Wire.send(0xA5);    // also tried changing this arguement to 165
+    transmissionStatus = Wire.endTransmission();
+    delay(commandDelay + 1);
+     
+    Wire.beginTransmission(oldAddress);
+    Wire.send(commandRegister);
+    Wire.send(newAddress); 
+    transmissionStatus = Wire.endTransmission();
+    delay(1000);
+}
+
+uint8_t getAcceleration(uint8_t MD25address)
+{
+  Wire.beginTransmission(MD25address);                      // Send byte to read acceleration
+  Wire.send(MD25_ACCELERATION_REG);
+  Wire.endTransmission();
+  
+  Wire.requestFrom(MD25address, (uint8_t)1);                         // Request 1 byte form MD25
+  while(Wire.available() < 1);                              // Wait for byte to arrive 
+  uint8_t acceleration = Wire.receive();                        // Get byte
+  return(acceleration);
+}
+
+/*to calculate the time (in seconds) for the acceleration to complete :
+
+if new speed > current speed
+steps = (new speed - current speed) / acceleration register
+
+if new speed < current speed
+steps = (current speed - new speed) / acceleration register
+
+time = steps * 25ms 
+
+For example :
+
+Acceleration register	Time/step	Current speed	New speed	Steps	Acceleration  time
+1	25ms	0	255	255	6.375s
+2	25ms	127	255	64	1.6s
+3	25ms	80	0	27	0.675s
+5 (default)	25ms	0	255	51	1.275s
+10	25ms	255	0	26	0.65s
+
+*/
+void setAcceleration(uint8_t MD25address, uint8_t value)// value from 1-10.  1 = slowest acceleration, 10 = fastest acceleration
+{ 
+	Wire.beginTransmission(MD25address);                      // Send byte to set acceleration
+	Wire.send(MD25_ACCELERATION_REG);
+	Wire.send(value);
+	Wire.endTransmission();
+}
+
+void setAccelerationBoth(uint8_t value)// value from 1-10.  1 = slowest acceleration, 10 = fastest acceleration
+{ 
+  Wire.beginTransmission(FRONT_MD25_ADDR);                      // Send byte to set acceleration
+  Wire.send(MD25_ACCELERATION_REG);
+  Wire.send(value);
+  Wire.endTransmission();
+
+  Wire.beginTransmission(REAR_MD25_ADDR);                      // Send byte to set acceleration
+  Wire.send(MD25_ACCELERATION_REG);
+  Wire.send(value);
+  Wire.endTransmission();
+}
+
+void quantifySpeeds(uint8_t acceleration)// runs robot forward, then back at each possible speed, prints results
+{
+    fullStop();
+    uint8_t oldAccel = getAcceleration(FRONT_MD25_ADDR); //save existing acceleration rate
+    setAccelerationBoth(acceleration);//adjust rate
+    delay(6000);// be sure bot has had time to come to a complete stop
+    uint8_t speedStep;//0-127
+    for (speedStep = 127; speedStep > 0; speedStep--)// step through each possible speed setting and record the actual speed.
+    {
+        int32_t distanceToSpeed[4][128];//index1 = wheel, index2 = speedStep, value = distance(in clicks) required to get up to speed.  Compare the reported distance to the actual measured distance to discover wheel slip and maximum slip free acceleration.
+        int32_t overshoot[4][128];//distance it takes to slow down, 
+        int32_t clicksPerSecond[4][128];
+        fullStop();
+        encoderReset();
+        drive4wheelSpeeds(speedStep, speedStep, speedStep, speedStep);//drive forward
+        delay((speedStep/acceleration) * 25);//ms. wait for bot to get up to speed.
+        distanceToSpeed[LF][speedStep] = getEncoderCount(LF);
+        distanceToSpeed[RF][speedStep] = getEncoderCount(RF);
+        distanceToSpeed[LR][speedStep] = getEncoderCount(LR);
+        distanceToSpeed[RR][speedStep] = getEncoderCount(RR);
+        delay(1000);
+        clicksPerSecond[LF][speedStep] = getEncoderCount(LF) - distanceToSpeed[LF][speedStep];
+        clicksPerSecond[RF][speedStep] = getEncoderCount(RF) - distanceToSpeed[RF][speedStep];
+        clicksPerSecond[LR][speedStep] = getEncoderCount(LR) - distanceToSpeed[LR][speedStep];
+        clicksPerSecond[RR][speedStep] = getEncoderCount(RR) - distanceToSpeed[RR][speedStep];
+        drive4wheelSpeeds(-speedStep, -speedStep, -speedStep, -speedStep);//drive reverse, stop at 0.
+        
+        boolean testLF;
+        boolean testRF;
+        boolean testLR;
+        boolean testRR;
+        
+        do
+        {            
+            overshoot[LF][speedStep] = getEncoderCount(LF);
+            overshoot[RF][speedStep] = getEncoderCount(RF);
+            overshoot[LR][speedStep] = getEncoderCount(LR);
+            overshoot[RR][speedStep] = getEncoderCount(RR);
+            if((testLF = (overshoot[LF][speedStep]) <= 0))
+                driveWheelSpeed(LF, 0);
+            if((testRF = (overshoot[LF][speedStep]) <= 0))
+                driveWheelSpeed(RF, 0);
+            if((testLR = (overshoot[LF][speedStep]) <= 0))
+                driveWheelSpeed(LR, 0);
+            if((testRR = (overshoot[LF][speedStep]) <= 0))
+                driveWheelSpeed(RR, 0);
+        }while(!(testLF && testRF && testLR && testRR));//while at least one encoder is still above zero
+        
+        delay(((speedStep/acceleration) * 25) + 250);//ms. wait for bot to slow to a stop
+        overshoot[LF][speedStep] = getEncoderCount(LF);
+        overshoot[RF][speedStep] = getEncoderCount(RF);
+        overshoot[LR][speedStep] = getEncoderCount(LR);
+        overshoot[RR][speedStep] = getEncoderCount(RR);
+        
+	}
+    setAccelerationBoth(oldAccel); //restore acceleration factor to its previous value,
+}
+
+void quantifyAcceleration()
+{
+    uint8_t i;
+    for(i = 10; i >= 1; i--)
+    {
+        quantifySpeeds(i);
+    }
+
+}
+
+void motorPowerLoss()
+{
+  while(!(digitalRead(FRONT_POWER_PIN)) && !(digitalRead(REAR_POWER_PIN))) //wait here for power to appear at both motor controllers
+	{
+      blinkNtimes(1);// blink until power is good
+	}  
+  fullStop();
+  encoderReset();
+  if(getMD25SpeedByteFormat(FRONT_MD25_ADDR) != 1)
+  setMD25SpeedByteFormat(FRONT_MD25_ADDR, 1);  
+  if(getMD25SpeedByteFormat(REAR_MD25_ADDR) != 1)
+  setMD25SpeedByteFormat(REAR_MD25_ADDR, 1);   
+  fullStop(); 
+  setAutoSpeedRegulationOn(FRONT_MD25_ADDR);
+  setAutoSpeedRegulationOn(REAR_MD25_ADDR);
+  setTimeoutOff(FRONT_MD25_ADDR);
+  setTimeoutOff(REAR_MD25_ADDR);
+}
+
+void driveForwardXclicks(uint32_t clicks)
+{  
+	encoderReset();
+	uint32_t startLF = getEncoderCount(LF);
+	uint32_t startRF = getEncoderCount(RF);
+	uint32_t startLR = getEncoderCount(LR);
+	uint32_t startRR = getEncoderCount(RR);
+  
+	drive4wheelSpeeds(127, 127, 127, 127);  
+  
+	boolean LFstopped = false;
+	boolean RFstopped = false;
+	boolean LRstopped = false;
+	boolean RRstopped = false;
+  
+	while (!(LFstopped && RFstopped && LRstopped && RRstopped))
+    {
+		if (getEncoderCount(LF) >= startLF + clicks)
+        {
+          driveWheelSpeed(LF, 0);
+          LFstopped = true;
+        }
+		if (getEncoderCount(RF) >= startRF + clicks)
+        {
+          driveWheelSpeed(RF, 0);
+          RFstopped = true;
+        }
+		if (getEncoderCount(LR) >= startLR + clicks)
+        {
+          driveWheelSpeed(LR, 0);
+          LRstopped = true;
+        }
+        if (getEncoderCount(RR) >= startRR + clicks)
+        {
+          driveWheelSpeed(RR, 0);
+          RRstopped = true;
+        }     
+    }    
+}
+
+void turn90degrees(Direction_t direction)
+{ 
+    encoderReset();
+    int32_t startLF = getEncoderCount(LF);
+    int32_t startRF = getEncoderCount(RF);
+    int32_t startLR = getEncoderCount(LR);
+    int32_t startRR = getEncoderCount(RR);
+    
+    boolean LFstopped = false;
+    boolean RFstopped = false;
+    boolean LRstopped = false;
+    boolean RRstopped = false;
+    
+    static const int32_t NINETY_DEGREE_TURN_CLICKS = 143;
+    if(direction == LEFT)
+    {   
+        drive4wheelSpeeds(-127, 127, -127, 127);        
+        while (!(LFstopped && RFstopped && LRstopped && RRstopped))
+        {
+			if (getEncoderCount(LF) <= startLF - NINETY_DEGREE_TURN_CLICKS)
+			{
+				driveWheelSpeed(LF, 0);
+				LFstopped = true;
+			}
+			if (getEncoderCount(RF) >= startRF + NINETY_DEGREE_TURN_CLICKS)
+			{
+              
+				driveWheelSpeed(RF, 0);
+				RFstopped = true;
+			}
+			if (getEncoderCount(LR) <= startLR - NINETY_DEGREE_TURN_CLICKS)
+			{
+				driveWheelSpeed(LR, 0);
+				LRstopped = true;
+			}
+			if (getEncoderCount(RR) >= startRR + NINETY_DEGREE_TURN_CLICKS)
+			{
+				driveWheelSpeed(RR, 0);
+				RRstopped = true;
+			}
+        }
+    }
+    else if(direction == RIGHT)
+    {
+        drive4wheelSpeeds(127, -127, 127, -127);
+        while (!(LFstopped && RFstopped && LRstopped && RRstopped))
+        {
+			if (getEncoderCount(LF) >= startLF + NINETY_DEGREE_TURN_CLICKS)
+			{
+				driveWheelSpeed(LF, 0);
+				LFstopped = true;
+			}
+			if (getEncoderCount(RF) <= startRF - NINETY_DEGREE_TURN_CLICKS)
+			{
+				driveWheelSpeed(RF, 0);
+				RFstopped = true;
+			}
+			if (getEncoderCount(LR) >= startLR + NINETY_DEGREE_TURN_CLICKS)
+			{
+				driveWheelSpeed(LR, 0);
+				LRstopped = true;
+			}
+			if (getEncoderCount(RR) <= startRR - NINETY_DEGREE_TURN_CLICKS)
+			{
+				driveWheelSpeed(RR, 0);
+				RRstopped = true;
+			}
+        }
+    }
+    delay(200);
+}
+
+void turn45degrees(Direction_t direction)
+{ 
+    encoderReset();
+    int32_t startLF = getEncoderCount(LF);
+    int32_t startRF = getEncoderCount(RF);
+    int32_t startLR = getEncoderCount(LR);
+    int32_t startRR = getEncoderCount(RR);
+    
+    boolean LFstopped = false;
+    boolean RFstopped = false;
+    boolean LRstopped = false;
+    boolean RRstopped = false;
+    
+    static const int32_t FORTYFIVE_DEGREE_TURN_CLICKS = 70;
+    if(direction == LEFT)
+    {   
+        drive4wheelSpeeds(-127, 127, -127, 127);        
+        while (!(LFstopped && RFstopped && LRstopped && RRstopped))
+        {
+			if (getEncoderCount(LF) <= startLF - FORTYFIVE_DEGREE_TURN_CLICKS)
+			{
+				driveWheelSpeed(LF, 0);
+				LFstopped = true;
+			}
+			if (getEncoderCount(RF) >= startRF + FORTYFIVE_DEGREE_TURN_CLICKS)
+			{
+				driveWheelSpeed(RF, 0);
+				RFstopped = true;
+			}
+			if (getEncoderCount(LR) <= startLR - FORTYFIVE_DEGREE_TURN_CLICKS)
+			{
+				driveWheelSpeed(LR, 0);
+				LRstopped = true;
+			}
+			if (getEncoderCount(RR) >= startRR + FORTYFIVE_DEGREE_TURN_CLICKS)
+			{
+				driveWheelSpeed(RR, 0);
+				RRstopped = true;
+			}
+          
+        }	
+    }
+    else if(direction == RIGHT)
+    {
+        drive4wheelSpeeds(127, -127, 127, -127);
+        while (!(LFstopped && RFstopped && LRstopped && RRstopped))
+        {
+			if (getEncoderCount(LF) >= startLF + FORTYFIVE_DEGREE_TURN_CLICKS)
+			{
+				driveWheelSpeed(LF, 0);
+				LFstopped = true;
+			}
+			if (getEncoderCount(RF) <= startRF - FORTYFIVE_DEGREE_TURN_CLICKS)
+			{
+				driveWheelSpeed(RF, 0);
+				RFstopped = true;
+			}
+			if (getEncoderCount(LR) >= startLR + FORTYFIVE_DEGREE_TURN_CLICKS)
+			{
+				driveWheelSpeed(LR, 0);
+				LRstopped = true;
+			}	
+			if (getEncoderCount(RR) <= startRR - FORTYFIVE_DEGREE_TURN_CLICKS)
+			{
+				driveWheelSpeed(RR, 0);
+				RRstopped = true;
+			}
+        }
+    }    
+}
+
+void      followRightWallLoop()
+{
+}
+    
+void      followLeftWallLoop()
+{
+}
+
+void  turnNorthLoop()
+{
+	Direction_t turn;
+	uint8_t currentPosition;
+	while (!((currentPosition = getBearing()) < 3 || currentPosition > 253 ))// not within NORTH tolerance
+	{	
+		if(currentPosition > SOUTH_HEADING)
+		{
+			turn = RIGHT;
+			//very coarse turn
+			if(currentPosition < WEST_HEADING)
+			{
+				turn90degrees(turn);
+				continue;
+			}
+			//course turn
+			else if(currentPosition < NORTHWEST_HEADING)
+			{
+				turn45degrees(turn);
+				continue;
+			}
+			//fine turn
+			else
+			{
+				turnMinimum(turn);
+			}		
+		}
+		else
+		{
+			turn = LEFT;
+			//very coarse turn
+			if(currentPosition > EAST_HEADING)
+			{
+				turn90degrees(turn);
+				continue;
+			}
+			//course turn
+			else if(currentPosition > NORTHEAST_HEADING)
+			{
+				turn45degrees(turn);
+				continue;
+			}
+			//fine turn
+			else
+			{		
+				turnMinimum(turn);
+			}		
+		}
+	} 
+}
+ 
+void turnMinimum(Direction_t direction)// turn the minimum amount that we reliably can.
+{
+    setAccelerationBoth(3);
+    
+    if(direction == LEFT)
+    {   
+        drive4wheelSpeeds(-63, 63, -63, 63);        
+        delay(100);
+        drive4wheelSpeeds(0,0,0,0);
+    }
+    else if(direction == RIGHT)
+    {
+        drive4wheelSpeeds(63, -63, 63, -63);
+        delay(100);
+        drive4wheelSpeeds(0,0,0,0);
+    } 
+	setAccelerationBoth(6);  
+}
+
+void      goAroundCenterFromNearLoop()
+{
+}
+     
+void      goAroundCenterFromFarLoop()
+{
+}
+     
+void      goAroundBoxLeftFromRightLoop()
+{
+}
+     
+void      goAroundBoxRightFromLeftLoop()
+{
+}
+     
+void      continueStraightLeftLoop()
+{
+}
+     
+void      continueStraightRightLoop()
+{
+}
+    
+void autonomousDriveLoop(uint32_t longSide, uint32_t shortSide)
+{    
+    driveForwardXclicks(longSide);
+    turn90degrees(RIGHT);  
+    driveForwardXclicks(shortSide); 
+    turn90degrees(RIGHT); 
+    driveForwardXclicks(longSide);
+    turn90degrees(RIGHT); 
+    driveForwardXclicks(shortSide); 
+    turn90degrees(RIGHT);
+}
+
+void      competitionFailSafeLoop()
+{
+    while(true)
+    {
+        autonomousDriveLoop(6000, 200);
+    }      
+}
+
+void startButtonFallingHandler() // button pushed
+{
+    digitalWrite(TEENSY_LED_PIN, HIGH);
+    tone(TONE_PIN, 440);
+}
+    
+void startButtonRisingHandler() // button released
+{    
+    startButtonBeenPushed = true;
+    digitalWrite(TEENSY_LED_PIN, LOW);
+    noTone(TONE_PIN);
+}
+
+void frontIRrisingHandler() // IR sensor within range
+{
+    digitalWrite(TEENSY_LED_PIN, HIGH);
+    tone(TONE_PIN, 2200);
+}
+ 
+void frontIRfallingHandler() // IR sensor out of range
+{
+    digitalWrite(TEENSY_LED_PIN, LOW);
+    noTone(TONE_PIN);
+}
+  
+void leftBumperSwitchFallingHandler()// left whisker made contact
+{
+    digitalWrite(TEENSY_LED_PIN, HIGH);
+    tone(TONE_PIN, 600);
+}
+    
+void leftBumperSwitchRisingHandler()// left whisker released contact
+{
+    digitalWrite(TEENSY_LED_PIN, LOW);
+    noTone(TONE_PIN);
+}
+    
+void rightBumperSwitchFallingHandler()// right whisker made contact
+{
+    digitalWrite(TEENSY_LED_PIN, HIGH);
+    tone(TONE_PIN, 1200);
+}
+
+void rightBumperSwitchRisingHandler()// right whisker released contact
+{
+    digitalWrite(TEENSY_LED_PIN, LOW);
+    noTone(TONE_PIN);
+}
+
+void startSetup()//competition start function
+{
+  sonarSetup();
+  while(!digitalRead(START_PIN))
+  { // wait in empty loop till start button is pressed   
+  }
+  delay(100);
+  zeroCompass();
+  encoderReset();
+}
+
+void competitionFailSafeSetup()
+{
+  sonarSetup();
+  while(!digitalRead(START_PIN))
+  { // wait in empty loop till start button is pressed   
+  }
+  delay(100);
+  zeroCompass();
+  encoderReset();
+  driveForwardXclicks(300);
+}
+
+void autonomousDriveSetup()
+{
+  sonarSetup();
+  while(!digitalRead(START_PIN))
+  { // wait in empty loop till start button is pressed   
+  }
+  delay(100);
+  zeroCompass();
+  encoderReset();
+}
+
+void otherTestSetup()
+{  
+  encoderReset();
+}
+
+void     staticVoltageLoop()
+{
+}
+
+void     staticCapacitanceLoop()
+{
+}
+ 
+void      staticTemperatureLoop()
+{
+}
+
+void      staticSignalLoop()
+{
+}
+
+void      startLoop(){}//should never be entered.  Start is only called once from setup().  Use for debug only.
+{
+}
+     
+void      pullUpToYellowBoxLoop()
+{
+}
+     
+void      readVoltageLoop()
+{
+}
+     
+void      goAroundYellowBoxLoop()
+{
+}
+    
+void      pullUpToBlueBoxLoop()
+{
+}
+     
+void      readCapacitanceLoop()
+{
+}
+     
+void      goAroundBlueBoxLoop()
+{
+}
+     
+void      goAroundCenterBoardSeekTemperatureLoop()
+{
+}
+     
+void      pullUpToGreenBoxLoop()
+{
+}
+     
+void      readTemperatureLoop()
+{
+}
+     
+void      goAroundGreenBoxLoop()
+{
+}
+    
+void      pullUpToRedBoxLoop()
+{
+}
+     
+void      readSignalLoop()
+{
+}
+     
+void      goAroundRedBoxLoop()
+{
+}
+    
+void      goAroundCenterBoardLoop()
+{
+}
+         
+void endlessBlink()
+{
+    while(true)
+    {
+        digitalWrite(TEENSY_LED_PIN, HIGH);
+        delay(400);          
+        digitalWrite(TEENSY_LED_PIN, LOW);
+        delay(750);
+    }
+}
+
+void blinkWhile(boolean condition)
+{
+    while(condition)
+	{
+          digitalWrite(TEENSY_LED_PIN, HIGH);
+          delay(250);          
+          digitalWrite(TEENSY_LED_PIN, LOW);
+          delay(250);
+    }
+}
+
+void operationalModeSetup()
+{
+    motorPowerLoss();   
+    //blinkNtimes(operationalMode);
+    setupTaskBoardNeutral();
+    
+    switch (operationalMode) 
+    {
+		case LCD_TEST:
+			LCDdisplay();
+			break;
+		case STATIC_VOLTAGE_TEST: 
+			result = getYellowVoltageDirection();
+			Serial.println(result);
+			break;
+		case STATIC_CAPACITANCE_TEST:
+			result = getBlueCapacitanceDirection();
+			Serial.println(result);
+			break;
+		case STATIC_TEMPERATURE_TEST:
+			result = getGreenTemperatureDirection();
+			Serial.println(result);
+			break;
+		case STATIC_SIGNAL_TEST:
+			result = getRedSignalDirection();
+			Serial.println(result);
+			break;
+		case OTHER_TEST:
+			//turn90degrees(LEFT);
+			//autonomousDriveLoop(2000, 180);
+			break;
+		case QUANTIFY_SPEEDS_TEST:
+			quantifySpeeds(1);
+			break;
+		case RADIO_CONTROL_DRIVE_TEST:
+			radioControlSetup();
+			break;
+		case AUTONOMOUS_DRIVE_TEST:
+			autonomousDriveSetup();
+			break;      
+		case COMPETITION_FAIL_SAFE:
+			competitionFailSafeSetup();
+			break;
+		case START:
+			startSetup();
+			break;
+		default: 
+			// if nothing else matches, blink led indicating a problem      
+			blinkNtimes(1);
+    }
+}
+
+void operationalModeLoop()
+{
+    switch (operationalMode) 
+    {
+		case LCD_TEST:
+			LCDdisplay();
+			break;
+		case STATIC_VOLTAGE_TEST:
+			staticVoltageLoop();
+			break;
+		case STATIC_CAPACITANCE_TEST:
+			staticCapacitanceLoop();
+			break;
+		case STATIC_TEMPERATURE_TEST:
+			staticTemperatureLoop();
+			break;
+		case STATIC_SIGNAL_TEST:
+			staticSignalLoop();
+			break;
+		case OTHER_TEST:
+			delay(2000);
+			getBlueCapacitanceDirection();
+			delay(2000);
+			getYellowVoltageDirection();
+			delay(2000);
+			getGreenTemperatureDirection();
+			delay(2000);
+			getRedSignalDirection();
+			break;
+		case RADIO_CONTROL_DRIVE_TEST:
+			radioControlLoop();
+			break;
+		case AUTONOMOUS_DRIVE_TEST:
+			autonomousDriveLoop(2010, 210);
+			break;
+		case FOLLOW_RIGHT_WALL:
+			followRightWallLoop();
+			break;
+		case FOLLOW_LEFT_WALL:
+			followLeftWallLoop();
+			break;
+		case DRIVE_STRAIGHT_X_CLICKS:
+			driveForwardXclicks(600);
+			break;
+		case TURN_90_DEGREES:
+			turn90degrees(RIGHT);
+			break;
+		case TURN_TO_NORTH:
+			turnNorthLoop();
+			break;
+		case GO_AROUND_CENTER_FROM_NEAR:
+			goAroundCenterFromNearLoop();
+			break;
+		case GO_AROUND_CENTER_FROM_FAR:
+			goAroundCenterFromFarLoop();
+			break;
+		case GO_AROUND_BOX_LEFT_FROM_RIGHT:
+			goAroundBoxLeftFromRightLoop();
+			break;
+		case GO_AROUND_BOX_RIGHT_FROM_LEFT:
+			goAroundBoxRightFromLeftLoop();
+			break;
+		case CONTINUE_STRAIGHT_LEFT:
+			continueStraightLeftLoop();
+			break;
+		case CONTINUE_STRAIGHT_RIGHT:
+			continueStraightRightLoop();
+			break;
+		case COMPETITION_FAIL_SAFE:
+			competitionFailSafeLoop();
+			break;
+		case START:
+			startLoop();//should never be entered.  Start is only called once from setup().  Use for debug only.
+			break;
+		case PULL_UP_TO_YELLOW_BOX:
+			pullUpToYellowBoxLoop();
+			break;
+		case READ_VOLTAGE:
+			readVoltageLoop();
+			break;
+		case GO_AROUND_YELLOW_BOX:
+			goAroundYellowBoxLoop();
+			break;
+		case PULL_UP_TO_BLUE_BOX:
+			pullUpToBlueBoxLoop();
+			break;
+		case READ_CAPACITANCE:
+			readCapacitanceLoop();
+			break;
+		case GO_AROUND_BLUE_BOX:
+			goAroundBlueBoxLoop();
+			break;
+		case GO_AROUND_CENTER_BOARD_SEEK_TEMPERATURE:
+			goAroundCenterBoardSeekTemperatureLoop();
+			break;
+		case PULL_UP_TO_GREEN_BOX:
+			pullUpToGreenBoxLoop();
+			break;
+		case READ_TEMPERATURE:
+			readTemperatureLoop();
+			break;
+		case GO_AROUND_GREEN_BOX:
+			goAroundGreenBoxLoop();
+			break;
+		case PULL_UP_TO_RED_BOX:
+			pullUpToRedBoxLoop();
+			break;
+		case READ_SIGNAL:
+			readSignalLoop();
+			break;
+		case GO_AROUND_RED_BOX:
+			goAroundRedBoxLoop();
+			break;
+		case GO_AROUND_CENTER_BOARD:
+			goAroundCenterBoardLoop();
+			break;
+		case FINISH_LAP:
+			break;
+		default: 
+			// if nothing else matches, blink led indicating a problem      
+			blinkNtimes(1);// should not happen unless an invalid operationalMode is selected
+    }
+}
+
+void turnTo(uint8_t direction)
+{
+}
+
+void sonarSetup()
+{
+  pinMode(FRONT_SRF05_ECHO_PIN, INPUT);
+  pinMode(FRONT_SRF05_TRIGGER_PIN, OUTPUT);
+  
+  pinMode(LEFT_SRF05_ECHO_PIN, INPUT);
+  pinMode(LEFT_SRF05_TRIGGER_PIN, OUTPUT);
+  
+  pinMode(RIGHT_SRF05_ECHO_PIN, INPUT);
+  pinMode(RIGHT_SRF05_TRIGGER_PIN, OUTPUT);
+  
+  pinMode(REAR_SRF05_ECHO_PIN, INPUT);
+  pinMode(REAR_SRF05_TRIGGER_PIN, OUTPUT);
+}
+
+
+
+uint16_t getTimeToFrontObject()
+{
+  digitalWrite(FRONT_SRF05_TRIGGER_PIN, LOW);                   // Set the trigger pin to low for 2uS
+  delayMicroseconds(2);
+  digitalWrite(FRONT_SRF05_TRIGGER_PIN, HIGH);                  // Send a 10uS high to trigger ranging
+  delayMicroseconds(10);
+  digitalWrite(FRONT_SRF05_TRIGGER_PIN, LOW);                   // Send pin low again
+  uint16_t time = pulseIn(FRONT_SRF05_ECHO_PIN, HIGH, MAX_uS);        // Read in times pulse
+                         // Calculate distance from time of pulse
+  return(time);                      
+}
+
+uint16_t getTimeToRearObject()
+{
+  digitalWrite(REAR_SRF05_TRIGGER_PIN, LOW);                   // Set the trigger pin to low for 2uS
+  delayMicroseconds(2);
+  digitalWrite(REAR_SRF05_TRIGGER_PIN, HIGH);                  // Send a 10uS high to trigger ranging
+  delayMicroseconds(10);
+  digitalWrite(REAR_SRF05_TRIGGER_PIN, LOW);                   // Send pin low again
+  uint16_t time = pulseIn(REAR_SRF05_ECHO_PIN, HIGH, MAX_uS);        // Read in times pulse
+                         // Calculate distance from time of pulse
+  return(time);                      
+}
+
+uint16_t getDistanceToFrontObject()
+{
+  digitalWrite(FRONT_SRF05_TRIGGER_PIN, LOW);                   // Set the trigger pin to low for 2uS
+  delayMicroseconds(2);
+  digitalWrite(FRONT_SRF05_TRIGGER_PIN, HIGH);                  // Send a 10uS high to trigger ranging
+  delayMicroseconds(10);
+  digitalWrite(FRONT_SRF05_TRIGGER_PIN, LOW);                   // Send pin low again
+  uint16_t wheelDistanceUnits = pulseIn(FRONT_SRF05_ECHO_PIN, HIGH, MAX_uS);        // Read in times pulse
+                         // Calculate distance from time of pulse
+  return(wheelDistanceUnits);                      
+}
+
+uint16_t getDistanceToLeftObject()
+{
+  digitalWrite(LEFT_SRF05_TRIGGER_PIN, LOW);                   // Set the trigger pin to low for 2uS
+  delayMicroseconds(2);
+  digitalWrite(LEFT_SRF05_TRIGGER_PIN, HIGH);                  // Send a 10uS high to trigger ranging
+  delayMicroseconds(10);
+  digitalWrite(LEFT_SRF05_TRIGGER_PIN, LOW);                   // Send pin low again
+  uint16_t wheelDistanceUnits = pulseIn(FRONT_SRF05_ECHO_PIN, HIGH, MAX_uS);        // Read in times pulse
+                         // Calculate distance from time of pulse
+  return(wheelDistanceUnits);
+}  
+ 
+uint16_t getDistanceToRightObject()
+{
+  digitalWrite(RIGHT_SRF05_TRIGGER_PIN, LOW);                   // Set the trigger pin to low for 2uS
+  delayMicroseconds(2);
+  digitalWrite(RIGHT_SRF05_TRIGGER_PIN, HIGH);                  // Send a 10uS high to trigger ranging
+  delayMicroseconds(10);
+  digitalWrite(RIGHT_SRF05_TRIGGER_PIN, LOW);                   // Send pin low again
+  uint16_t wheelDistanceUnits = pulseIn(FRONT_SRF05_ECHO_PIN, HIGH, MAX_uS);        // Read in times pulse
+                         // Calculate distance from time of pulse
+  return(wheelDistanceUnits);
+}
+
+uint16_t getDistanceToRearObject()//  get code from 
+{
+  digitalWrite(REAR_SRF05_TRIGGER_PIN, LOW);                   // Set the trigger pin to low for 2uS
+  delayMicroseconds(2);
+  digitalWrite(REAR_SRF05_TRIGGER_PIN, HIGH);                  // Send a 10uS high to trigger ranging
+  delayMicroseconds(10);
+  digitalWrite(REAR_SRF05_TRIGGER_PIN, LOW);                   // Send pin low again
+  uint16_t wheelDistanceUnits = pulseIn(FRONT_SRF05_ECHO_PIN, HIGH, MAX_uS);        // Read in times pulse
+                         // Calculate distance from time of pulse
+  return(wheelDistanceUnits);
+}
+
+boolean bumpCheck()// returns true if about to run into an object, false otherwise
+{
+    if(getDistanceToFrontObject() <= BUMP_STOP_THRESHOLD)
+    return true;
+    else
+    return false;
+}
+
+void followRightWall(uint8_t direction)// until closest wall ends
+{
+    uint16_t distance;
+    //drive4wheelSpeeds(int16_t LFspeed, int16_t RFspeed, int16_t LRspeed, int16_t RRspeed);
+    //turn in place till pointing in correct direction.
+    turnTo(direction);// EAST_HEADING, NORTH_HEADING, WEST_HEADING, SOUTH_HEADING
+    drive4wheelSpeeds(127, 127, 127, 127);
+    while( (distance = getDistanceToRightObject()) < WALL_FOLLOW_END_OF_WALL_THRESHOLD && !bumpCheck() )// end of wall not reached, not about to run into something.
+    {
+        
+        if(distance < WALL_FOLLOW_MIN_DISTANCE_TO_WALL)// too close to wall
+        {
+            if(127 == wheelSpeed[RF])//right side speed maxed
+            {
+                drive4wheelSpeeds(wheelSpeed[LF] - SPEED_ADJUST_STEP, wheelSpeed[RF], wheelSpeed[LR] - SPEED_ADJUST_STEP, wheelSpeed[RR]);//slow down left side
+            }
+            else
+            {
+                drive4wheelSpeeds(wheelSpeed[LF], wheelSpeed[RF] + SPEED_ADJUST_STEP, wheelSpeed[LR], wheelSpeed[RR]  + SPEED_ADJUST_STEP);//speed up right side
+            }
+        }
+        else if(distance > WALL_FOLLOW_MAX_DISTANCE_FROM_WALL)// too far from wall
+        {
+            if(127 == wheelSpeed[LF])//left side speed maxed
+            {
+                drive4wheelSpeeds(wheelSpeed[LF], wheelSpeed[RF] - SPEED_ADJUST_STEP, wheelSpeed[LR], wheelSpeed[RR] - SPEED_ADJUST_STEP);//slow down right side
+            }
+            else
+            {
+                drive4wheelSpeeds(wheelSpeed[LF] + SPEED_ADJUST_STEP, wheelSpeed[RF], wheelSpeed[LR] + SPEED_ADJUST_STEP, wheelSpeed[RR]);//speed up left side
+            }
+        }
+    }
+    drive4wheelSpeeds(0, 0, 0, 0);  //stop
+}
+
+void calibrateSonar()// start with bot against a wall
+{
+    fullStop();
+    delay(1000);
+    encoderReset();
+    drive4wheelSpeeds(-127,-127,-127,-127);
+    delay(1000);
+    fullStop();
+    delay(1000);
+    uint16_t pinguS = getTimeToFrontObject();
+    int32_t leftWheel = getEncoderCount(LR);
+    int32_t rightWheel = getEncoderCount(RR);
+    int32_t distanceTraveled = (leftWheel+rightWheel)/2;
+    float conversionFactor = (float)distanceTraveled/pinguS;
+    Serial.print("Left Encoder : ");
+    Serial.println(leftWheel, DEC);
+    Serial.print("Right Encoder : ");
+    Serial.println(rightWheel, DEC);
+    Serial.print("ping time in uS : ");
+    Serial.println(pinguS, DEC);
+    Serial.print("distance traveled in wheel clicks over 1 second at max speed : ");
+    Serial.println(distanceTraveled, DEC);
+    Serial.print("speed : ");
+    Serial.println(distanceTraveled * .000872665, DEC);
+    Serial.print("conversionFactor : ");
+    Serial.println(conversionFactor, DEC);
+}
+
+void GPIO14setup()
+{
+}
+
+void setupTaskBoardNeutral()
+{
+    pinMode(RELAY_A_PIN, OUTPUT);
+    pinMode(RELAY_B_PIN, OUTPUT);    
+    pinMode(CAP_RESULT_PIN, INPUT);
+    pinMode(TASK_CAP_LOW_PIN, OUTPUT);  
+    pinMode(REF_CAP_LOW_PIN, OUTPUT);   
+    pinMode(TASK_CAP_HIGH_PIN, OUTPUT);  
+    pinMode(REF_CAP_HIGH_PIN, OUTPUT);
+    
+    digitalWrite(RELAY_A_PIN, LOW);    
+    digitalWrite(RELAY_B_PIN, LOW);
+    digitalWrite(TASK_CAP_LOW_PIN, LOW);    
+    digitalWrite(REF_CAP_LOW_PIN, LOW);
+     digitalWrite(TASK_CAP_LOW_PIN, LOW);    
+    digitalWrite(REF_CAP_LOW_PIN, LOW);     
+    
+}
+
+
+Direction_t getYellowVoltageDirection()
+{
+    // if the magnitude of the voltage is greater than 11V, go right, if less than 9V, go left.
+    digitalWrite(RELAY_A_PIN, HIGH);    
+    digitalWrite(RELAY_B_PIN, LOW);
+    delay(10);
+    digitalWrite(RELAY_A_PIN, LOW);
+	uint16_t taskVoltage = analogRead(VOLT_SIGNAL_ADC_PIN);
+	if (taskVoltage < tenVoltADCequivalent)
+	{
+		return LEFT;
+	}
+	else
+	{
+		return RIGHT;
+	}     
+}
+
+Direction_t getBlueCapacitanceDirection()
+{
+	// if the capacitance is greater than 1 µF, then go right, if it is less than 100 nF, go left
+    //drive relay
+    digitalWrite(RELAY_A_PIN, LOW);    
+    digitalWrite(RELAY_B_PIN, HIGH);
+    delay(10);
+    digitalWrite(RELAY_B_PIN, LOW);
+    digitalWrite(TASK_CAP_LOW_PIN, LOW);   
+    digitalWrite(REF_CAP_LOW_PIN, LOW);   
+    digitalWrite(TASK_CAP_HIGH_PIN, LOW);  
+    digitalWrite(REF_CAP_HIGH_PIN, LOW);
+    delay(50); 
+    digitalWrite(TASK_CAP_HIGH_PIN, HIGH);  
+    digitalWrite(REF_CAP_HIGH_PIN, HIGH);
+    delayMicroseconds(10);// or 11uS = 1 time constant of REF_CAP
+    pinMode(TASK_CAP_LOW_PIN, INPUT);  
+    pinMode(REF_CAP_LOW_PIN, INPUT);   
+    pinMode(TASK_CAP_HIGH_PIN, INPUT);  
+    pinMode(REF_CAP_HIGH_PIN, INPUT);
+    
+    if(digitalRead(CAP_RESULT_PIN) == HIGH)// Task Cap higher voltage than Ref Cap, thus Task Cap has lower Capacitance
+    {
+        return LEFT;
+    }    
+    else
+    {
+        return RIGHT;
+    }
+}
+
+Direction_t getGreenTemperatureDirection()
+{
+    // if it is 10°F greater than ambient temperature, go right, if it is 10°F less than ambient temperature, go left
+  
+	//int16_t tempArray[8];
+	int16_t ambient = getAmbient();
+	boolean isCold = false;
+	//fillTemperatureArray(tempArray);
+	uint8_t i;
+	for(i = 1; i <= 8; i++)
+	{
+		int16_t temp = getTemperaturePixel(i);
+		temp = toF(temp);
+		if(getTemperaturePixel(i) <= ambient - 6)
+		isCold = true;
+	}
+	if(isCold)
+	{
+		return LEFT;
+	}	
+	else
+	{  
+		return RIGHT; 
+	}
+}
+
+Direction_t getRedSignalDirection()
+{
+    // if it is a square wave, go right, if it is a saw-tooth wave, go left.
+    digitalWrite(RELAY_A_PIN, HIGH);    
+    digitalWrite(RELAY_B_PIN, LOW);
+    delay(10);
+    digitalWrite(RELAY_A_PIN, LOW);
+	uint16_t taskVoltage = analogRead(VOLT_SIGNAL_ADC_PIN);
+	if (taskVoltage > sawADCequivalent)
+	{
+		return LEFT;
+	}
+	else
+	{
+		return RIGHT;
+	}     
+	return(RIGHT);
+}
+
+int16_t toF(int8_t C)
+{
+    //F = (C * 9.0/5.0) + 32.0
+    int16_t F = (C * 1.8) + 32;
+    return F;
+}
+   
+void setServo(uint8_t x)// active range 0-30 which usually represents about 180 degrees, 31 stops servo pulses. The calculation is SERVO_POS*60+540uS. So the range of the servo pulse is 0.54mS to 2.34mS in 60uS steps.  
+{
+	if (x > 31)
+    x = 31;
+    Wire.beginTransmission(TPA81_ADDR);
+    Wire.send(TPA81_CMD_REG);
+    Wire.send(x);   
+    Wire.endTransmission();
+}
+
+void setServoRange(uint8_t x)//default:120, acceptable values 20-120; The calculation for the range in uS is ((31*ServoRange)/2). Setting a range of 20 will give a range of (31*20)/2 or 310uS. Setting a range of 120 will give a range of (31*120)/2 or 1860uS. In all cases the available range is centered on the servo's mid position of 1500uS
+{
+    Wire.beginTransmission(TPA81_ADDR);
+    Wire.send(TPA81_SERVO_RANGE_REG);
+    Wire.send(x);   
+    Wire.endTransmission();
+}
+
+int16_t getAmbient()
+{
+	delay(40);
+	Wire.beginTransmission(TPA81_ADDR);          
+	Wire.send(TPA81_AMBIENT_REG);                              
+	Wire.endTransmission();
+	int8_t ambient = 127;
+	Wire.requestFrom(TPA81_ADDR, (uint8_t)1);        
+	while(Wire.available())
+	{   
+		ambient = Wire.receive();
+	} 
+	ambient =  toF(ambient);
+	return ambient;
+}
+
+int16_t getTemperaturePixel(uint8_t pixelNum)// takes 0 - 8, otherwise returns -127
+{
+    delay(40);
+    if(pixelNum <= 8)
+    {
+        pixelNum++;  // function input starts at 0, ambient is register 1, pixel 1 is register 2.  TPA81 pixels start at 2
+        Wire.beginTransmission(TPA81_ADDR);          
+        Wire.send(pixelNum);                              
+        Wire.endTransmission();
+        int16_t pixel = 127;
+        Wire.requestFrom(TPA81_ADDR, (uint8_t)1);            
+        while(Wire.available())
+        {        
+            pixel = Wire.receive(); 
+        }
+        pixel = toF(pixel);
+        return 255;
+    }
+    else
+    {
+		return 127;
+    }
+}
+
+void fillTemperatureArray(int16_t tempArray[]) //array is always length 8 
+{
+    delay(40);
+    uint8_t i;
+	for(i = TPA81_TEMP1_REG; i <= TPA81_TEMP8_REG; i++)
+	{
+		Wire.beginTransmission(TPA81_ADDR);          
+		Wire.send(i);                              
+		Wire.endTransmission();
+		Wire.requestFrom(TPA81_ADDR, (uint8_t)1);    
+		while(Wire.available())
+		{   
+			tempArray[i-TPA81_TEMP1_REG] = Wire.receive(); 
+		}
+		tempArray[i-TPA81_TEMP1_REG] = toF(tempArray[i-TPA81_TEMP1_REG]);
+	}
+}

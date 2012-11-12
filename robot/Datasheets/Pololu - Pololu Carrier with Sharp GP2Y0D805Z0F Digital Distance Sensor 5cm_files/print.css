@@ -1,0 +1,60 @@
+/* remove menus, header, zoom, footer links, next/previous section */
+#left_col, #right_col, #header_holder, img.zoom, #footer .links, .next_section, .previous_section, .no_print { 
+  display: none;
+}
+
+/* put main content closer to top */
+#main_and_right { 
+  margin-top: 0px;
+}
+
+/* remove margin on main column */
+/* specified explicitly here to gain higher precedence */
+#main_and_right #main {
+  padding: 0;
+}
+
+/* font size */
+body { 
+  font-family: Times, serif !important;
+  font-size: 12px;
+}
+
+/* make links look nicer */
+a:link, a:visited { 
+  color: #025;
+  background: transparent;
+  font-weight: bold;
+  text-decoration: underline;
+}
+
+body { 
+  text-align: justify;
+}
+
+.picture_with_caption {
+  page-break-inside: avoid;
+}
+
+#footer, #breadcrumbs { 
+  display: none;
+}
+
+.document_sections a {
+  color: black !important;
+  text-decoration: none !important;
+  font-weight: normal !important;
+}
+
+.nopagebreak { 
+  page-break-after: avoid;
+}
+
+strong { 
+  page-break-after: avoid;
+}
+
+.print_autosize {
+  height: auto !important;
+  width: auto !important;
+}

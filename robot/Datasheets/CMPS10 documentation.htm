@@ -1,0 +1,66 @@
+
+<!-- saved from url=(0052)http://www.robot-electronics.co.uk/htm/cmps10doc.htm -->
+<html><head><meta http-equiv="Content-Type" content="text/html; charset=ISO-8859-1">
+<title>CMPS10 documentation</title>
+</head>
+<body>
+
+
+<p align="center"><font size="6">&nbsp;CMPS10 -
+Tilt Compensated Compass Module&nbsp;</font></p>
+
+
+<p align="center"><img border="0" src="./CMPS10 documentation_files/cmps10.png"></p>
+<p><b>Introduction</b><br>
+The CMPS10 module is a tilt compensated compass. Employing a 3-axis magnetometer
+and a 3-axis accelerometer and a powerful 16-bit processor, the CMPS10 has been designed to remove the errors caused by tilting of the PCB.
+The CMPS10 produces a result of 0-3599 representing 0-359.9 or 0
+to 255. The
+output of the three sensors measuring x, y and z components of the magnetic
+field, together with the pitch and roll are used to calculate
+the bearing, each of these components are also made available in there raw form. We have
+also written <a href="http://www.robot-electronics.co.uk/acatalog/examples.html">examples</a> of using the CMPS10
+module with
+a wide range of popular controllers.&nbsp;The CMPS10 module requires a power supply at&nbsp;
+3.3 - 5v and draws a nominal 25mA of current.&nbsp;There are three ways of getting the bearing from the module. A serial interface,
+  an I2C interface or a PWM output.</p>
+<p><b>Mode selection<br>
+</b>For data on each mode please click the mode heading. Note the CMPS10 looks
+at the mode selection pins at power-up only.&nbsp;</p>
+<table border="0" cellspacing="1" cellpadding="5">
+  <tbody><tr>
+    <td align="center"><b><a href="http://www.robot-electronics.co.uk/htm/cmps10i2c.htm">I2C mode</a></b></td>
+    <td align="center"><b><a href="http://www.robot-electronics.co.uk/htm/cmps10ser.htm">Serial mode</a></b></td>
+    <td align="center"><b><a href="http://www.robot-electronics.co.uk/htm/cmps10pwm.htm">PWM mode</a></b></td>
+  </tr>
+  <tr>
+    <td><img border="0" src="./CMPS10 documentation_files/cmps10I2C_wire.png" width="335" height="146"></td>
+    <td><img border="0" src="./CMPS10 documentation_files/cmps10ser_wire.png" width="335" height="146"></td>
+    <td><img border="0" src="./CMPS10 documentation_files/cmps10pwm_wire.png" width="335" height="146"></td>
+  </tr>
+  <tr>
+    <td align="center">To enter the I2C mode of operation leave<br>
+      the mode pin unconnected</td>
+    <td align="center">To enter the serial mode of operation<br>
+      connect the mode pin to ground</td>
+    <td align="center"><font size="3">To enter the PWM mode of operation<br>
+      connect the select PWM pin to ground</font></td>
+  </tr>
+</tbody></table>
+<p><b><br>
+Data update frequency<br>
+</b>Updates of the tilt compensated heading occur at 75hz with the data is
+filtered by means of a 45 sample buffer, this means a complete refresh of the
+buffer is achieved every 640ms. Raw data from the magnetometer and accelerometer
+is available every 13.3ms.</p>
+<p><b>
+PCB Drilling Plan</b><br>
+The following diagram shows the CMPS10 PCB mounting hole positions.</p>
+  <p><img border="0" src="./CMPS10 documentation_files/cmps10dim.gif" width="231" height="261">&nbsp;</p>
+  <p>We have <a href="http://www.robot-electronics.co.uk/acatalog/examples.html"> examples</a> of using the Compass module with
+  a wide range of popular controllers.&nbsp;&nbsp;</p>
+
+
+
+
+</body></html>

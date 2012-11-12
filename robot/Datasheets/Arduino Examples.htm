@@ -1,0 +1,349 @@
+
+<!-- saved from url=(0059)http://www.robot-electronics.co.uk/htm/arduino_examples.htm -->
+<html><head><meta http-equiv="Content-Type" content="text/html; charset=windows-1252">
+<meta http-equiv="Content-Language" content="en-gb">
+
+<meta name="GENERATOR" content="Microsoft FrontPage 4.0">
+<meta name="ProgId" content="FrontPage.Editor.Document">
+<title>Arduino Examples</title>
+</head>
+
+<body>
+
+<p align="center"><font size="5"><b><span style="background-color: #FFFF00">&nbsp;Arduino
+Examples </span></b></font></p>
+<p align="left">These examples are designed to demonstrate how to use our
+modules with the Arduino. The Arduino's hardware serial port is not used to
+connect to our modules, which keeps it available to the USB port. That allows
+downloading new programs without having to continually disconnect/reconnect
+things. Most of these examples use the LCD03 display module to show the results,
+but it is also possible to display the results on the PC, as demonstrated in the
+CMPS03 example. All the modules which use the I2C bus have 1k8 pull-up resistors
+to 5v. You only need one set of resistors, located near the Arduino, regardless
+of however many I2C devices you have connected to it. </p>
+<p align="left">The Arduino uses 7bit I2C addresses, and our own documentation
+uses 8bit addresses. For example our CMPS02 is at address 0xc0, but on the
+Arduino you will use 0x60. The Arduino address is the same as our address, but
+shifted right by 1 bit.<br>
+The binary of 0xC0 is 11000000, the binary of 0x60 is 01100000. The Arduino will
+shift this left by 1bit and add the Read/Write bit automatically. You can find
+more information about the I2C bus in our <a href="http://www.robot-electronics.co.uk/htm/using_the_i2c_bus.htm">I2C tutorial</a>. </p>
+<table border="0" width="45%">
+  <tbody><tr>
+    <td width="36%"><a name="Index">Index</a>:</td>
+    <td width="64%"></td>
+  </tr>
+  <tr>
+    <td width="36%"><a href="http://www.robot-electronics.co.uk/htm/arduino_examples.htm#CMPS03 Magnetic Compass">CMPS03</a></td>
+    <td width="64%">Magnetic Compass</td>
+  </tr>
+  <tr>
+    <td width="36%"><a href="http://www.robot-electronics.co.uk/htm/arduino_examples.htm#CMPS10 serial">CMPS10 Serial</a></td>
+    <td width="64%">Tilt Compensated Magnetic Compass</td>
+  </tr>
+  <tr>
+    <td width="36%"><a href="http://www.robot-electronics.co.uk/htm/arduino_examples.htm#Tilt Compensated Magnetic Compass">CMPS10 I2C</a></td>
+    <td width="64%">Tilt Compensated Magnetic Compass</td>
+  </tr>
+  <tr>
+    <td width="36%"><a href="http://www.robot-electronics.co.uk/htm/arduino_examples.htm#SRF01 Ultrasonic Ranger">SRF01</a></td>
+    <td width="64%">Ultrasonic Ranger</td>
+  </tr>
+  <tr>
+    <td width="36%"><a href="http://www.robot-electronics.co.uk/htm/arduino_examples.htm#SRF02, SRF08, SRF10, SRF235">SRF02</a> </td>
+    <td width="64%">Ultrasonic Ranger</td>
+  </tr>
+  <tr>
+    <td width="36%"><a href="http://www.robot-electronics.co.uk/htm/arduino_examples.htm#SRF04 Ultrasonic Ranger">SRF04</a></td>
+    <td width="64%">Ultrasonic Ranger</td>
+  </tr>
+  <tr>
+    <td width="36%"><a href="http://www.robot-electronics.co.uk/htm/arduino_examples.htm#SRF05 Ultrasonic Ranger">SRF05</a></td>
+    <td width="64%">Ultrasonic Ranger</td>
+  </tr>
+  <tr>
+    <td width="36%"><a href="http://www.robot-electronics.co.uk/htm/arduino_examples.htm#SRF02, SRF08, SRF10, SRF235">SRF08</a></td>
+    <td width="64%">Ultrasonic Ranger</td>
+  </tr>
+  <tr>
+    <td width="36%"><a href="http://www.robot-electronics.co.uk/htm/arduino_examples.htm#SRF02, SRF08, SRF10, SRF235">SRF10</a></td>
+    <td width="64%">Ultrasonic Ranger</td>
+  </tr>
+  <tr>
+    <td width="36%"><a href="http://www.robot-electronics.co.uk/htm/arduino_examples.htm#SRF02, SRF08, SRF10, SRF235">SRF235</a> </td>
+    <td width="64%">Ultrasonic Ranger</td>
+  </tr>
+  <tr>
+    <td width="36%"><a href="http://www.robot-electronics.co.uk/htm/arduino_examples.htm#TPA81 Thermal Sensor">TPA81</a></td>
+    <td width="64%">8 Pixel Thermal Sensor</td>
+  </tr>
+  <tr>
+    <td width="36%"><a href="http://www.robot-electronics.co.uk/htm/arduino_examples.htm#SD20 Servo Controller">SD20</a></td>
+    <td width="64%">Servo Controller</td>
+  </tr>
+  <tr>
+    <td width="36%"><a href="http://www.robot-electronics.co.uk/htm/arduino_examples.htm#SD21 Servo Controller">SD21</a></td>
+    <td width="64%">Servo Controller</td>
+  </tr>
+  <tr>
+    <td width="36%"><a href="http://www.robot-electronics.co.uk/htm/arduino_examples.htm#MD03 50V 20A Motor Driver">MD03</a></td>
+    <td width="64%">24V 20A Motor Driver</td>
+  </tr>
+  <tr>
+    <td width="36%"><a href="http://www.robot-electronics.co.uk/htm/arduino_examples.htm#MD22 Dual 50V 5A Motor Driver">MD22</a></td>
+    <td width="64%">Dual 24V 5A Motor Driver</td>
+  </tr>
+  <tr>
+    <td width="36%"><a href="http://www.robot-electronics.co.uk/htm/arduino_examples.htm#MD25 RD02 Motor Controller">MD25</a></td>
+    <td width="64%">RD02 Motor Driver</td>
+  </tr>
+  <tr>
+    <td width="36%"><a href="http://www.robot-electronics.co.uk/htm/arduino_examples.htm#MD49 24v Motor Driver">MD49</a></td>
+    <td width="64%">24v EMG49 Motor Driver</td>
+  </tr>
+  <tr>
+    <td width="36%"><a href="http://www.robot-electronics.co.uk/htm/arduino_examples.htm#RLY08 Relay Module">RLY08</a></td>
+    <td width="64%">Relay Module</td>
+  </tr>
+  <tr>
+    <td width="36%"><a href="http://www.robot-electronics.co.uk/htm/arduino_examples.htm#LCD03 I2C LCD Display Module">LCD03</a></td>
+    <td width="64%">I2C LCD display module</td>
+  </tr>
+</tbody></table>
+<p><b><a name="CMPS03 Magnetic Compass">CMPS03 Magnetic Compass</a><br>
+</b>This uses the I2C bus to connect the Arduino to the CMPS03. It reads the
+bearing as a two byte integer and displays the bearing as a number 0-359 on the
+PC. </p>
+
+<p align="center"><img border="0" src="./Arduino Examples_files/CMPS03_arduino.png" width="689" height="402"></p>
+
+<table border="0" width="100%">
+  <tbody><tr>
+    <td width="50%">Download the <a href="http://www.robot-electronics.co.uk/files/cmps03i2c.pde">CMPS03I2C.PDE</a>
+      file</td>
+    <td width="50%">
+      <p align="right"><a href="http://www.robot-electronics.co.uk/htm/arduino_examples.htm#Index">Back to Index</a></p></td>
+  </tr>
+</tbody></table>
+<hr>
+<p align="left"><a name="CMPS10 serial"><b>Tilt Compensated
+Magnetic Compass</b></a><br>
+This uses serial to connect the Arduino to the CMPS09/CMPS10. It reads the
+bearing as a two byte integer and displays the bearing as a number (0-359) with
+one decimal place on the
+LCD03 display. It also displays the pitch and roll values.</p>
+<p align="center"><img border="0" src="./Arduino Examples_files/cmps10arduino.png" width="854" height="412"></p>
+
+<table border="0" width="100%">
+  <tbody><tr>
+    <td width="50%">Download the <a href="http://www.robot-electronics.co.uk/files/cmps10serial_arduino.pde">CMPS10SERIAL.PDE</a>
+      file</td>
+    <td width="50%">
+      <p align="right"><a href="http://www.robot-electronics.co.uk/htm/arduino_examples.htm#Index">Back to Index</a></p></td>
+  </tr>
+</tbody></table>
+<hr>
+
+<p align="left"><a name="Tilt Compensated Magnetic Compass"><b>Tilt Compensated
+Magnetic Compass</b></a><br>
+This uses the I2C bus to connect the Arduino to the CMPS09/CMPS10. It reads the
+bearing as a two byte integer and displays the bearing as a number 0-359 on the
+LCD03 display.</p>
+<p align="center"><img border="0" src="./Arduino Examples_files/CMPS09arduino.png" width="861" height="392"></p>
+
+<table border="0" width="100%">
+  <tbody><tr>
+    <td width="50%">Download the <a href="http://www.robot-electronics.co.uk/files/cmps09i2c.pde">CMPS09I2C.PDE</a>
+      file</td>
+    <td width="50%">
+      <p align="right"><a href="http://www.robot-electronics.co.uk/htm/arduino_examples.htm#Index">Back to Index</a></p></td>
+  </tr>
+</tbody></table>
+<hr>
+<p align="left"><b><a name="SRF01 Ultrasonic Ranger">SRF01 Ultrasonic Ranger</a></b><br>
+The SRF01 uses a single pin for both serial input and output. By using a
+software serial port, we can make the Arduino do serial input and output on a
+single pin as well. You can have up to 16 SRF01's connected to a single pin on
+the Arduino. The Range is displayed on an LCD03 module.</p>
+<p align="center"><img border="0" src="./Arduino Examples_files/SRF01arduino.png" width="778" height="477"></p>
+<table border="0" width="100%">
+  <tbody><tr>
+    <td width="50%">Download the <a href="http://www.robot-electronics.co.uk/files/srf01.pde">SRF01.PDE</a> file</td>
+    <td width="50%">
+      <p align="right"><a href="http://www.robot-electronics.co.uk/htm/arduino_examples.htm#Index">Back to Index</a></p></td>
+  </tr>
+</tbody></table>
+<hr>
+<p align="left"><a name="SRF02, SRF08, SRF10, SRF235"><b>SRF02, SRF08, SRF10,
+SRF235 Ultrasonic Rangers<br>
+</b></a>The SRF02, SRF08, SRF10 and SRF235 all use the same I2C interface. The
+basic ranging commands are the same, so this example works for all these
+rangers.</p>
+<p align="center"><img border="0" src="./Arduino Examples_files/SRF08arduino.png" width="758" height="442"></p>
+<table border="0" width="100%">
+  <tbody><tr>
+    <td width="50%">Download the <a href="http://www.robot-electronics.co.uk/files/srf08.pde">SRF08.PDE</a>&nbsp;
+      file</td>
+    <td width="50%">
+      <p align="right"><a href="http://www.robot-electronics.co.uk/htm/arduino_examples.htm#Index">Back to Index</a></p></td>
+  </tr>
+</tbody></table>
+<hr>
+<p align="left"><b><a name="SRF04 Ultrasonic Ranger">SRF04 Ultrasonic Ranger</a></b><br>
+To work with the Arduino, the SRF04 requires its timing pin (marked "do not
+connect" on the tech page) connected to ground, as shown below.&nbsp;</p>
+<p align="center"><img border="0" src="./Arduino Examples_files/SRF04arduino.png" width="496" height="434"></p>
+<table border="0" width="100%">
+  <tbody><tr>
+    <td width="50%">Download the <a href="http://www.robot-electronics.co.uk/files/SRF04.pde">SRF04.PDE</a>&nbsp;
+      file</td>
+    <td width="50%">
+      <p align="right"><a href="http://www.robot-electronics.co.uk/htm/arduino_examples.htm#Index">Back to Index</a></p></td>
+  </tr>
+</tbody></table>
+<hr>
+<p align="left"><b><a name="SRF05 Ultrasonic Ranger">SRF05 Ultrasonic Ranger</a></b><br>
+This example uses the SRF05 in one pin mode, where the Trigger and Echo signals
+appear on the same pin. Note the SRF05's mode pin is connected to ground to
+place it in one pin mode.</p>
+<p align="center"><img border="0" src="./Arduino Examples_files/SRF05arduino.png" width="477" height="432"></p>
+<table border="0" width="100%">
+  <tbody><tr>
+    <td width="50%">
+      <p align="left">Download the <a href="http://www.robot-electronics.co.uk/files/SRF05.pde">SRF05.PDE</a>&nbsp;
+      file</p>
+    </td>
+    <td width="50%">
+      <p align="right"><a href="http://www.robot-electronics.co.uk/htm/arduino_examples.htm#Index">Back to Index</a></p></td>
+  </tr>
+</tbody></table>
+<hr>
+<p align="left"><b><a name="TPA81 Thermal Sensor">TPA81 Thermal Sensor</a></b><br>
+The TPA81 connects to the Arduino using the I2C bus. This example displays the
+ambient temperature and 8 temperatures from thermal sensor, on an LCD03 module.</p>
+<p align="center"><img border="0" src="./Arduino Examples_files/TPA81arduino.png" width="777" height="433"></p>
+<table border="0" width="100%">
+  <tbody><tr>
+    <td width="50%">Download the <a href="http://www.robot-electronics.co.uk/files/TPA81.pde">TPA81.PDE</a> file</td>
+    <td width="50%">
+      <p align="right"><a href="http://www.robot-electronics.co.uk/htm/arduino_examples.htm#Index">Back to Index</a></p></td>
+  </tr>
+</tbody></table>
+<hr>
+<p align="left"><b><a name="SD20 Servo Controller">SD20 Servo Controller</a></b><br>
+Although the Arduino is capable of outputting servo pulses, it places
+restrictions on your software and uses up a lot of valuable I/O pins. By using
+the SD20 chip, you can control up to 20 servo's.</p>
+<p align="center"><img border="0" src="./Arduino Examples_files/SD20arduino.png" width="791" height="398"></p>
+<table border="0" width="100%">
+  <tbody><tr>
+    <td width="50%">Download the <a href="http://www.robot-electronics.co.uk/files/sd20.pde">SD20.PDE</a> file</td>
+    <td width="50%">
+      <p align="right"><a href="http://www.robot-electronics.co.uk/htm/arduino_examples.htm#Index">Back to Index</a></p></td>
+  </tr>
+</tbody></table>
+<hr>
+<p align="left"><b><a name="SD21 Servo Controller">SD21 Servo Controller</a></b><br>
+The SD21 is a ready wired module which can save a lot of time compared to the
+SD20 above. This example moves a servo through its maximum range.</p>
+<p align="center"><img border="0" src="./Arduino Examples_files/SD21arduino.png"></p>
+<table border="0" width="100%">
+  <tbody><tr>
+    <td width="50%">Download the <a href="http://www.robot-electronics.co.uk/files/SD21.pde">SD21.PDE</a>&nbsp;
+      file</td>
+    <td width="50%">
+      <p align="right"><a href="http://www.robot-electronics.co.uk/htm/arduino_examples.htm#Index">Back to Index</a></p></td>
+  </tr>
+</tbody></table>
+<hr>
+<p align="left"><b><a name="MD03 50V 20A Motor Driver">MD03 24V 20A Motor Driver</a><br>
+</b>This example runs the motor forwards and backwards, displaying the
+temperature and motor current on the LCD03.</p>
+<p align="center"><img border="0" src="./Arduino Examples_files/MD03arduino.png" width="622" height="743">
+</p>
+<table border="0" width="100%">
+  <tbody><tr>
+    <td width="50%">Download the <a href="http://www.robot-electronics.co.uk/files/MD03.pde">MD03.PDE</a> file</td>
+    <td width="50%">
+      <p align="right"><a href="http://www.robot-electronics.co.uk/htm/arduino_examples.htm#Index">Back to Index</a></p></td>
+  </tr>
+</tbody></table>
+<hr>
+<p align="left"><b><a name="MD22 Dual 50V 5A Motor Driver">MD22 24V 5A Motor
+Driver</a><br>
+</b>This example runs the motors forwards and backwards. The LCD03 is only used
+to display the software version number.</p>
+<p align="center"><img border="0" src="./Arduino Examples_files/MD22arduino.png" width="610" height="731"></p>
+<table border="0" width="100%">
+  <tbody><tr>
+    <td width="50%">Download the <a href="http://www.robot-electronics.co.uk/files/MD22.pde">MD22.PDE</a> file</td>
+    <td width="50%">
+      <p align="right"><a href="http://www.robot-electronics.co.uk/htm/arduino_examples.htm#Index">Back to Index</a></p></td>
+  </tr>
+</tbody></table>
+<hr>
+<p align="left"><b><a name="MD25 RD02 Motor Controller">MD25 RD02 Motor
+Controller</a></b><br>
+This example drives the RD02 motors to and encoder count of 5000, then back to
+zero. The Encoder count is displayed on the LCD03, as well as the battery
+voltage. </p>
+<p align="center"><img border="0" src="./Arduino Examples_files/arduino_MD25.png" width="776" height="478"></p>
+<table border="0" width="100%">
+  <tbody><tr>
+    <td width="50%">Download the <a href="http://www.robot-electronics.co.uk/files/arduino_MD25.pde">MD25.PDE</a> file</td>
+    <td width="50%">
+      <p align="right"><a href="http://www.robot-electronics.co.uk/htm/arduino_examples.htm#Index">Back to Index</a></p></td>
+  </tr>
+</tbody></table>
+<hr>
+<p align="left"><b><a name="MD49 24v Motor Driver">MD49 24v EMG49 Motor Driver</a></b><br>
+This example drives the MD49 motors displaying the encoder values, battery voltage,
+motor currents and error byte on the arduino serial monitor. </p>
+<p align="center"><img border="0" src="./Arduino Examples_files/arduino_MD49.png" width="831" height="593"></p>
+<table border="0" width="100%">
+  <tbody><tr>
+    <td width="50%">Download the <a href="http://www.robot-electronics.co.uk/files/arduino_MD49.pde">MD49.PDE </a> file</td>
+    <td width="50%">
+      <p align="right"><a href="http://www.robot-electronics.co.uk/htm/arduino_examples.htm#Index">Back to Index</a></p></td>
+  </tr>
+</tbody></table>
+<hr>
+<p><b><a name="RLY08 Relay Module">RLY08 Relay Module</a></b><br>
+A simple example. Just switches one of the eight relays on/off.&nbsp;</p>
+
+<p align="center"><img border="0" src="./Arduino Examples_files/RLY08arduino.png" width="668" height="384"></p>
+
+<table border="0" width="100%">
+  <tbody><tr>
+    <td width="50%">Download the <a href="http://www.robot-electronics.co.uk/files/RLY08.pde">RLY08.PDE</a> file</td>
+    <td width="50%">
+      <p align="right"><a href="http://www.robot-electronics.co.uk/htm/arduino_examples.htm#Index">Back to Index</a></p></td>
+  </tr>
+</tbody></table>
+<hr>
+
+<p><b><a name="LCD03 I2C LCD Display Module">LCD03 I2C LCD Display Module</a></b><br>
+The SRF02, SRF08, SRF10 and SRF235 all use the same I2C interface. This example
+is similar to our SRF02, SRF08, SRF10 and SRF235 examples above, except that it
+uses the LCD03 in I2C mode instead of serial. Make sure you have the link on the
+LCD03 module to the I2C position. This example makes use of a new I2C library by
+Dale Wentz, which can be downloaded from the Arduino playground at:<br>
+<a href="http://www.arduino.cc/playground/Code/LCDi2c">http://www.arduino.cc/playground/Code/LCDi2c</a></p>
+
+<p>&nbsp;</p>
+
+<p align="center"><img border="0" src="./Arduino Examples_files/LCD03arduino.png" width="850" height="415"></p>
+
+<table border="0" width="100%">
+  <tbody><tr>
+    <td width="50%">Download the <a href="http://www.robot-electronics.co.uk/files/LCD03.pde">LCD03.PDE</a> file</td>
+    <td width="50%">
+      <p align="right"><a href="http://www.robot-electronics.co.uk/htm/arduino_examples.htm#Index">Back to Index</a></p></td>
+  </tr>
+</tbody></table>
+<hr>
+
+
+
+
+</body></html>

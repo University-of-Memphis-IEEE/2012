@@ -1,0 +1,147 @@
+
+<!-- saved from url=(0070)http://www.robot-electronics.co.uk/htm/reducing_sidelobes_of_srf10.htm -->
+<html><head><meta http-equiv="Content-Type" content="text/html; charset=windows-1252">
+
+<meta name="GENERATOR" content="Microsoft FrontPage 4.0">
+<meta name="ProgId" content="FrontPage.Editor.Document">
+<title>Reducing Sidelobes of SRF10</title>
+</head>
+
+<body>
+
+<p class="MsoNormal" align="center" style="text-align:center"><span style="background-color: #FFFF00"><font size="4">&nbsp;Reducing
+Sidelobes of SRF10 </font></span>&nbsp;</p>
+<p class="MsoNormal" align="center" style="text-align:center">Article
+contributed by Harold Carey<br>
+hrcarey@comcast.net<o:p>
+</o:p>
+</p>
+<p class="MsoNormal">The price to pay for the SRF10’s tiny transducers is that
+the system is now very sensitive to objects way off boresight (boresight is the
+angle where the sonar is aimed, that is, straight ahead).<span style="mso-spacerun: yes">&nbsp;&nbsp;
+</span>In fact the sonar will respond continuously to the ground if aimed
+horizontally and mounted at a height of 3 feet or less.<span style="mso-spacerun: yes">&nbsp;
+</span>The published curves show the response pattern in dB, but what is more
+practical for my purposes is a plot of the distance an object will be detected
+vs. its angle from boresight.<span style="mso-spacerun: yes">&nbsp; </span>The
+SRF10 responds to a narrow object 30 inches away at an angle of 60 degrees below
+boresight, even with drastically reduced gain!<span style="mso-spacerun: yes">&nbsp;
+</span>This is certainly a false alarm for most applications (including mine).</p>
+<p class="MsoNormal">Reducing the gain cuts down the sidelobes somewhat, but not
+enough.</p>
+<p class="MsoNormal">&nbsp;The pattern up and down (relative to the picture in
+the book – looking at the component side with wires on left) is not
+symmetrical.<span style="mso-spacerun: yes">&nbsp; </span>The sonar is much more
+sensitive to objects below boresight.<span style="mso-spacerun: yes">&nbsp; </span>So
+if you are mounting your sonar vertically (not side-by-side), mount it
+up-side-down.<span style="mso-spacerun: yes">&nbsp; </span>And in any case, aim
+the sensor UP about 30 degrees or more to avoid the ground.<span style="mso-spacerun: yes">&nbsp;
+</span>Probably the mounting supplied can be bent.</p>
+<p class="MsoNormal">I did some experiments to try to reduce the sensitivity off
+boresight.<span style="mso-spacerun: yes">&nbsp; </span>I first installed a
+paper tube around both aluminum cans on the sensor.<span style="mso-spacerun: yes">&nbsp;
+</span>I tried lengths of 0.8” and 0.5” (measured from the PC board) with
+very similar results.<span style="mso-spacerun: yes">&nbsp; </span>I also tried
+3/8”ID shrink tubing (without shrinking it) with similar results.<span style="mso-spacerun: yes">&nbsp;
+</span>But I also tried fuzzy velvet ribbon, in 2 lengths, with dramatic
+results.&nbsp;<o:p>
+</o:p>
+</p>
+<p class="MsoNormal">These extensions form a tube a couple of wavelengths
+(0.339”=8.6mm) long from the transducer, so there is some combination of
+open-tube resonance, diffraction, absorption, and collimation happening.<span style="mso-spacerun: yes">&nbsp;
+</span>But it seems to be mostly absorption, because the fuzzy ribbon works much
+better.<span style="mso-spacerun: yes">&nbsp; </span>In every case, the
+sensitivity off boresight is reduced markedly.&nbsp;<o:p>
+</o:p>
+</p>
+<p class="MsoNormal">My experiment setup was to tape the sensor (aimed
+horizontally, with transducers side-by-side) onto a horizontal turntable that
+could rotate in azimuth.<span style="mso-spacerun: yes">&nbsp; </span>The
+turntable was mounted 5’ above the ground to avoid ground effects.<span style="mso-spacerun: yes">&nbsp;
+</span>I worked outside so there would be no interference from room reflections.<span style="mso-spacerun: yes">&nbsp;
+</span>I used a paper template to measure the rotation angle every 10 degrees
+(you could print the template below).<span style="mso-spacerun: yes">&nbsp; </span>I
+laid out a tape measure on the ground, with zero directly under the sonar.<span style="mso-spacerun: yes">&nbsp;
+</span>The target was a long ½”-diameter pole held vertically (using a wider
+target would be hard to determine its azimuth).<span style="mso-spacerun: yes">&nbsp;
+</span>I rotated the sensor to each 10 degree angle, moved the pole along the
+tape measure from distant to closer, and recorded the distance where is sonar
+responded.<span style="mso-spacerun:
+yes">&nbsp; </span>I also checked to be sure that there was no dead spot at that
+angle.<span style="mso-spacerun: yes">&nbsp; </span>The sonar is operated by a
+PIC16F870, with the gain reduced to 100 (setting of 6 in the register, which
+just barely detects the target at 53”), and max range reduced to 55”
+(setting of 33 in the register).<span style="mso-spacerun: yes">&nbsp; </span>My
+results as follows:&nbsp;<o:p>
+</o:p>
+</p>
+<p class="MsoNormal" align="center"><!--[if gte vml 1]><v:shapetype id="_x0000_t75" coordsize="21600,21600"
+ o:spt="75" o:preferrelative="t" path="m@4@5l@4@11@9@11@9@5xe" filled="f"
+ stroked="f">
+ <v:stroke joinstyle="miter"/>
+ <v:formulas>
+  <v:f eqn="if lineDrawn pixelLineWidth 0"/>
+  <v:f eqn="sum @0 1 0"/>
+  <v:f eqn="sum 0 0 @1"/>
+  <v:f eqn="prod @2 1 2"/>
+  <v:f eqn="prod @3 21600 pixelWidth"/>
+  <v:f eqn="prod @3 21600 pixelHeight"/>
+  <v:f eqn="sum @0 0 1"/>
+  <v:f eqn="prod @6 1 2"/>
+  <v:f eqn="prod @7 21600 pixelWidth"/>
+  <v:f eqn="sum @8 21600 0"/>
+  <v:f eqn="prod @7 21600 pixelHeight"/>
+  <v:f eqn="sum @10 21600 0"/>
+ </v:formulas>
+ <v:path o:extrusionok="f" gradientshapeok="t" o:connecttype="rect"/>
+ <o:lock v:ext="edit" aspectratio="t"/>
+</v:shapetype><v:shape id="_x0000_i1026" type="#_x0000_t75" style='width:467.25pt;
+ height:255.75pt' o:ole="">
+ <v:imagedata src="file:///C:/WINDOWS/TEMP/msoclip1/01/clip_image001.wmz"
+  o:title=""/>
+</v:shape><![endif]-->
+ <img border="0" src="./Reducing Sidelobes of SRF10_files/reduci1.gif" width="481" height="263">
+</p>
+<p class="MsoNormal">&nbsp;<o:p>
+</o:p>
+The 0.35” fuzzy tube was too short to be very effective at wide angles.<span style="mso-spacerun: yes">&nbsp;
+</span>The 0.5” fuzzy tube was slightly too long, because it affected the
+boresight sensitivity, but of course the max gain could be increased to
+compensate for that.<span style="mso-spacerun: yes">&nbsp; </span>The boresight
+sensitivity was unchanged by the paper tube and short fuzzy tube, but it was
+limited by the set max distance.<span style="mso-spacerun: yes">&nbsp; </span>At
+50 degrees, adding the paper tube reduced the detected distance for 45” to
+zero.<span style="mso-spacerun: yes">&nbsp; </span>The 0.5” fuzzy tube made
+the sonar into a truly narrow-beam device, with no sidelobes beyond 30 degrees!<span style="mso-spacerun: yes">&nbsp;
+</span>There are no dead spots in the pattern like you might expect from
+diffraction effects.<span style="mso-spacerun: yes">&nbsp; </span>The tubes
+helped in the up direction also, but not as dramatically.<o:p>
+</o:p>
+</p>
+<p class="MsoNormal">You might want to experiment with different lengths of
+tube, to see if sidelobes can be reduced further.<span style="mso-spacerun: yes">&nbsp;
+</span>Maybe Velcro thicker fuzz or upholstery velvet would be a better
+absorber.<span style="mso-spacerun: yes">&nbsp; </span>Maybe a flare like a
+trombone would be better.<span style="mso-spacerun: yes">&nbsp; </span>Maybe a
+long tube with a slight taper would not affect the center sensitivity, but still
+kill off-axis sidelobes.<span style="mso-spacerun: yes">&nbsp; </span>Maybe just
+a horizontal flat surface would absorb the ground clutter.<o:p>
+</o:p></p>
+<p class="MsoNormal" align="center"><img border="0" src="./Reducing Sidelobes of SRF10_files/fuzzy tube.jpg" width="452" height="402">
+</p>
+<p class="MsoNormal" align="center"><!--[if gte vml 1]><v:shape id="_x0000_i1025" type="#_x0000_t75"
+ style='width:468pt;height:453pt' o:ole="">
+ <v:imagedata src="file:///C:/WINDOWS/TEMP/msoclip1/01/clip_image003.emz"
+  o:title=""/>
+</v:shape><![endif]-->
+ <img border="0" src="./Reducing Sidelobes of SRF10_files/reduci2.gif" width="624" height="604"><!--[if gte mso 9]><xml>
+ <o:OLEObject Type="Embed" ProgID="Visio.Drawing.6" ShapeID="_x0000_i1025"
+  DrawAspect="Content" ObjectID="_1174979335">
+ </o:OLEObject>
+</xml><![endif]-->
+</p>
+
+
+
+</body></html>

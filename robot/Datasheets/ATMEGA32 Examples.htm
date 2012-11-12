@@ -1,0 +1,251 @@
+
+<!-- saved from url=(0060)http://www.robot-electronics.co.uk/htm/ATMEGA32_examples.htm -->
+<html><head><meta http-equiv="Content-Type" content="text/html; charset=windows-1252">
+<meta http-equiv="Content-Language" content="en-gb">
+
+<meta name="GENERATOR" content="Microsoft FrontPage 4.0">
+<meta name="ProgId" content="FrontPage.Editor.Document">
+<title>ATMEGA32 Examples</title>
+</head>
+
+<body>
+
+<p align="center"><font size="5"><b><span style="background-color: #FFFF00">&nbsp;ATMEGA32 Examples </span></b></font></p>
+<p align="left">These examples are designed to demonstrate how to use a ATMEGA32
+to communicate with our modules. All the modules which use the I2C bus have
+pull-up resistors
+to 5v. You only need one set of resistors for the whole I2C bus regardless
+of however many I2C devices you have connected to it. You can find
+more information about the I2C bus in our <a href="http://www.robot-electronics.co.uk/htm/using_the_i2c_bus.htm">I2C tutorial</a>. </p>
+<table border="0" width="41%">
+  <tbody><tr>
+    <td width="24%"><a name="Index">Index</a>:</td>
+    <td width="76%"></td>
+  </tr>
+  <tr>
+    <td width="24%"><a href="http://www.robot-electronics.co.uk/htm/ATMEGA32_examples.htm#CMPS03 I2C">CMPS03</a></td>
+    <td width="76%">Magnetic Compass</td>
+  </tr>
+  <tr>
+    <td width="24%"><a href="http://www.robot-electronics.co.uk/htm/ATMEGA32_examples.htm#CMPS09 I2C">CMPS09</a></td>
+    <td width="76%">Tilt compensated magnetic compass</td>
+  </tr>
+  <tr>
+    <td width="24%"><a href="http://www.robot-electronics.co.uk/htm/ATMEGA32_examples.htm#SRF01 Ultrasonic Ranger">SRF01</a></td>
+    <td width="76%">Ultrasonic Ranger</td>
+  </tr>
+  <tr>
+    <td width="24%"><a href="http://www.robot-electronics.co.uk/htm/ATMEGA32_examples.htm#SRF02, SRF08, SRF10, SRF235">SRF02/08/10/235</a> </td>
+    <td width="76%">Ultrasonic Rangers</td>
+  </tr>
+  <tr>
+    <td width="24%"><a href="http://www.robot-electronics.co.uk/htm/ATMEGA32_examples.htm#SRF04 Ultrasonic Ranger">SRF04/SRF05</a></td>
+    <td width="76%">Ultrasonic Ranger</td>
+  </tr>
+  <tr>
+    <td width="24%"><a href="http://www.robot-electronics.co.uk/htm/ATMEGA32_examples.htm#TPA81 Thermal Sensor">TPA81</a></td>
+    <td width="76%">8 Pixel Thermal Sensor</td>
+  </tr>
+  <tr>
+    <td width="24%"><a href="http://www.robot-electronics.co.uk/htm/ATMEGA32_examples.htm#MD03 50V 20A Motor Driver">MD03</a></td>
+    <td width="76%">24V 20A Motor Driver</td>
+  </tr>
+  <tr>
+    <td width="24%"><a href="http://www.robot-electronics.co.uk/htm/ATMEGA32_examples.htm#MD22 Dual 50V 5A Motor Driver">MD22</a></td>
+    <td width="76%">Dual 24V 5A Motor Driver</td>
+  </tr>
+  <tr>
+    <td width="24%"><a href="http://www.robot-electronics.co.uk/htm/ATMEGA32_examples.htm#MD23 RD01 Motor Controller">MD25</a></td>
+    <td width="76%">RD01 Motor Driver</td>
+  </tr>
+  <tr>
+    <td width="24%"><a href="http://www.robot-electronics.co.uk/htm/ATMEGA32_examples.htm#RLY08 Relay Module">RLY08</a></td>
+    <td width="76%">Relay Module</td>
+  </tr>
+  <tr>
+    <td width="24%"><a href="http://www.robot-electronics.co.uk/htm/ATMEGA32_examples.htm#SD21">SD21</a></td>
+    <td width="76%">Servo driver</td>
+  </tr>
+  <tr>
+    <td width="24%"><a href="http://www.robot-electronics.co.uk/htm/ATMEGA32_examples.htm#SD20">SD20</a></td>
+    <td width="76%">Servo driver</td>
+  </tr>
+</tbody></table>
+
+<p><b><a name="CMPS03 I2C">CMPS03</a><br>
+</b>This is an example of how to use the ATMEGA32 to read the bearing from one
+of our CMPS03 modules using the I2C bus, then display the bearing data to an
+LCD03. </p>
+
+<p align="center"><img border="0" src="./ATMEGA32 Examples_files/ATMEGA32 CMPS03.png" width="635" height="475"></p>
+
+<table border="0" width="100%">
+  <tbody><tr>
+    <td width="50%">Download the <a href="http://www.robot-electronics.co.uk/files/AVR_CMPS03.zip">AVR_CMPS03.zip</a>
+      file</td>
+    <td width="50%">
+      <p align="right"><a href="http://www.robot-electronics.co.uk/htm/ATMEGA32_examples.htm#Index">Back to Index</a></p></td>
+  </tr>
+</tbody></table>
+<hr>
+<p><b><a name="CMPS09 I2C">CMPS09</a><br>
+</b>This example reads the bearing from our CMPS09 in I2C mode
+displaying the bearing, pitch and roll on an LCD03. </p>
+
+<p align="center"><img border="0" src="./ATMEGA32 Examples_files/ATMEGA32 CMPS09.png" width="632" height="473"></p>
+
+<table border="0" width="100%">
+  <tbody><tr>
+    <td width="50%">Download the <a href="http://www.robot-electronics.co.uk/files/AVR_CMPS09.zip">AVR_ CMPS09.zip</a>
+      file</td>
+    <td width="50%">
+      <p align="right"><a href="http://www.robot-electronics.co.uk/htm/ATMEGA32_examples.htm#Index">Back to Index</a></p></td>
+  </tr>
+</tbody></table>
+<hr>
+<p align="left"><b><a name="SRF01 Ultrasonic Ranger">SRF01 Ultrasonic Ranger</a></b><br>
+The SRF01 uses a single pin for both serial input and output, a BAT85 diode
+stops the SRF01 from driving the output line of the ATMEGA32 when returning
+data&nbsp; The Range is displayed on an LCD03 module.</p>
+<p align="center"><img border="0" src="./ATMEGA32 Examples_files/ATMEGA32 SRF01.png" width="630" height="501"></p>
+<table border="0" width="100%">
+  <tbody><tr>
+    <td width="50%">Download the <a href="http://www.robot-electronics.co.uk/files/AVR_SRF01.zip">AVR_SRF01.zip</a>
+      file</td>
+    <td width="50%">
+      <p align="right"><a href="http://www.robot-electronics.co.uk/htm/ATMEGA32_examples.htm#Index">Back to Index</a></p></td>
+  </tr>
+</tbody></table>
+<hr>
+<p align="left"><a name="SRF02, SRF08, SRF10, SRF235"><b>SRF02, SRF08, SRF10,
+SRF235 Ultrasonic Rangers<br>
+</b></a>This example communicates with the SRF02, SRF08, SRF10 or
+the SRF235 using the I2C bus. The SRF02, SRF08, SRF10 and SRF235 all use the same I2C interface. The
+basic ranging commands are the same, so this example works for all these
+rangers.</p>
+<p align="center"><img border="0" src="./ATMEGA32 Examples_files/ATMEGA32 SRF08.png" width="628" height="468"></p>
+<table border="0" width="100%">
+  <tbody><tr>
+    <td width="50%">Download the <a href="http://www.robot-electronics.co.uk/files/AVR_SRF08.zip">AVR_ SRF08.zip</a>&nbsp;
+      file</td>
+    <td width="50%">
+      <p align="right"><a href="http://www.robot-electronics.co.uk/htm/ATMEGA32_examples.htm#Index">Back to Index</a></p></td>
+  </tr>
+</tbody></table>
+<hr>
+<p align="left"><b><a name="SRF04 Ultrasonic Ranger">SRF04/ SRF05 Ultrasonic Ranger</a>s</b><br>
+As the SRF04 and SRF05 use the same method of communicating this example is compatible
+with both the SRF04 and SRF05.</p>
+<p align="center"><img border="0" src="./ATMEGA32 Examples_files/ATMEGA32 SRF05.png" width="627" height="475"></p>
+<table border="0" width="100%">
+  <tbody><tr>
+    <td width="50%">Download the <a href="http://www.robot-electronics.co.uk/files/AVR_SRF05.zip">AVR_ SRF05.zip</a>&nbsp;
+      file</td>
+    <td width="50%">
+      <p align="right"><a href="http://www.robot-electronics.co.uk/htm/ATMEGA32_examples.htm#Index">Back to Index</a></p></td>
+  </tr>
+</tbody></table>
+<hr>
+<p align="left"><b><a name="TPA81 Thermal Sensor">TPA81 Thermal Sensor</a></b><br>
+The TPA81 connects to the ATMEGA32 using the I2C bus. This example displays the
+ambient temperature and 8 temperatures from thermal sensor on an LCD03 aswell as
+driving the TPA81 servo.</p>
+<p align="center"><img border="0" src="./ATMEGA32 Examples_files/ATMEGA32 TPA81.png" width="633" height="472"></p>
+<table border="0" width="100%">
+  <tbody><tr>
+    <td width="50%">Download the <a href="http://www.robot-electronics.co.uk/files/AVR_TPA81.zip">AVR_ TPA81.zip</a>
+      file</td>
+    <td width="50%">
+      <p align="right"><a href="http://www.robot-electronics.co.uk/htm/ATMEGA32_examples.htm#Index">Back to Index</a></p></td>
+  </tr>
+</tbody></table>
+<hr>
+<p align="left"><b><a name="MD03 50V 20A Motor Driver">MD03 24V 20A Motor Driver</a><br>
+</b>This example runs the motor forwards and backwards using the acceleration
+register to move the motor to a set speed.</p>
+<p align="center"><img border="0" src="./ATMEGA32 Examples_files/ATMEGA32 MD03.png" width="480" height="563">
+</p>
+<table border="0" width="100%">
+  <tbody><tr>
+    <td width="50%">Download the <a href="http://www.robot-electronics.co.uk/files/AVR_MD03.zip">AVR_ MD03.zip</a>
+      file</td>
+    <td width="50%">
+      <p align="right"><a href="http://www.robot-electronics.co.uk/htm/ATMEGA32_examples.htm#Index">Back to Index</a></p></td>
+  </tr>
+</tbody></table>
+<hr>
+<p align="left"><b><a name="MD22 Dual 50V 5A Motor Driver">MD22 24V 5A Motor
+Driver</a><br>
+</b>This example runs the motors using the turn register to alter their speeds.</p>
+<p align="center"><img border="0" src="./ATMEGA32 Examples_files/ATMEGA32 MD22.png" width="479" height="559"></p>
+<table border="0" width="100%">
+  <tbody><tr>
+    <td width="50%">Download the <a href="http://www.robot-electronics.co.uk/files/AVR_MD22.zip">AVR_ MD22.zip</a>
+      file</td>
+    <td width="50%">
+      <p align="right"><a href="http://www.robot-electronics.co.uk/htm/ATMEGA32_examples.htm#Index">Back to Index</a></p></td>
+  </tr>
+</tbody></table>
+<hr>
+<p align="left"><b><a name="MD23 RD01 Motor Controller">MD25 RD02 Motor
+Controller</a></b><br>
+This example comunicates with the MD25 via serial and drives the motors
+displaying the encoder values on an LCD03 in hex format, as well as the motor currents. </p>
+<p align="center"><img border="0" src="./ATMEGA32 Examples_files/ATMEGA32 MD25.png" width="811" height="500"></p>
+<table border="0" width="100%">
+  <tbody><tr>
+    <td width="50%">Download the <a href="http://www.robot-electronics.co.uk/files/AVR_MD25.zip">AVR_ MD25.zip</a>
+      file</td>
+    <td width="50%">
+      <p align="right"><a href="http://www.robot-electronics.co.uk/htm/ATMEGA32_examples.htm#Index">Back to Index</a></p></td>
+  </tr>
+</tbody></table>
+<hr>
+<p><b><a name="RLY08 Relay Module">RLY08 Relay Module</a></b><br>
+In this example used the I2C bus to control the RLY08 turning the relays on and
+off individually.</p>
+
+<p align="center"><img border="0" src="./ATMEGA32 Examples_files/ATMEGA32 RLY08.png" width="606" height="471"></p>
+
+<table border="0" width="100%">
+  <tbody><tr>
+    <td width="50%">Download the <a href="http://www.robot-electronics.co.uk/files/AVR_RLY08.zip">AVR_ RLY08.zip</a>
+      file</td>
+    <td width="50%">
+      <p align="right"><a href="http://www.robot-electronics.co.uk/htm/ATMEGA32_examples.htm#Index">Back to Index</a></p></td>
+  </tr>
+</tbody></table>
+<hr>
+<p><b><a name="SD21">SD21 Servo driver</a></b><br>
+The example moves a servo between 2 positions.&nbsp;</p>
+
+<p align="center"><img border="0" src="./ATMEGA32 Examples_files/ATMEGA32 SD21.png" width="913" height="472"></p>
+
+<table border="0" width="100%">
+  <tbody><tr>
+    <td width="50%">Download the <a href="http://www.robot-electronics.co.uk/files/AVR_SD21.zip">AVR_ SD21.zip</a>
+      file</td>
+    <td width="50%">
+      <p align="right"><a href="http://www.robot-electronics.co.uk/htm/ATMEGA32_examples.htm#Index">Back to Index</a></p></td>
+  </tr>
+</tbody></table>
+<hr>
+<p><b><a name="SD20">SD20 Servo driver</a></b><br>
+This example uses the ATMEGA32 to move the first servo on the SD20 between two
+positions.&nbsp;</p>
+
+<p align="center"><img border="0" src="./ATMEGA32 Examples_files/ATMEGA32 SD20.png" width="703" height="472"></p>
+
+<table border="0" width="100%">
+  <tbody><tr>
+    <td width="50%">Download the <a href="http://www.robot-electronics.co.uk/files/AVR_SD20.zip">AVR_ SD20.zip</a>
+      file</td>
+    <td width="50%">
+      <p align="right"><a href="http://www.robot-electronics.co.uk/htm/ATMEGA32_examples.htm#Index">Back to Index</a></p></td>
+  </tr>
+</tbody></table>
+<hr>
+
+
+
+</body></html>

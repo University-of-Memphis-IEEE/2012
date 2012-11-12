@@ -1,0 +1,509 @@
+/* MAIN CONTAINERS */
+
+* { margin: 0; padding: 0; }
+
+small,p.small {
+  font-size: 80%;
+  font-family: Verdana, sans-serif;
+  line-height: 1.4em;
+}
+
+#site {
+  text-align: left;
+}
+
+#website_introduction, #contents p {
+  margin-bottom: 1.2em;
+  text-align: justify;
+}
+
+pre {
+    margin-bottom: 1.2em;
+    margin-top: 0em;
+}
+
+#contents table th p {
+  text-align: center;
+}
+
+/* TEXT, HEADERS, LINKS, ETC. */
+
+h3 {
+  font-size: 100%;
+  margin-bottom: 0em;
+  margin-top: 0em;
+}
+
+ul, ol {
+  margin-bottom: 1em;
+  margin-left: 1em;
+  padding-left: 0;
+  padding-right: 1em;
+  list-style-position: inside;
+}
+
+ul li, ol li {
+  margin-bottom: 0.5em;
+}
+
+a img {
+  border: 0;
+}
+
+/* The main page introduction */
+div#website_introduction {
+}
+
+/* Survey */
+
+#survey p { 
+  text-align: left;
+}
+
+#survey label {
+  font-weight: bold;
+  white-space: nowrap;
+}
+
+#survey input.indent, #survey input.radio {
+  margin-left: 1em;
+}
+
+#survey p.intro { 
+  margin-left: 1em;
+  margin-right: 1em;
+  font-style: italic;
+}
+
+#survey span.suggestions {
+  font-style: italic;
+}
+
+/* Search results */
+
+dl#search dd { 
+  font-size: 80%;
+  font-family: Verdana, sans-serif;
+  line-height: 1.4em;
+  margin-bottom: 1em;
+}
+dl#search em, dl#search em { 
+  font-weight: bold;
+   font-style: italic;
+}
+form.search { 
+  margin-bottom: 1em;
+}
+
+dl#search img {
+  float: left;
+  border: 1px solid #a3b0d4;
+  margin-right: 1em;
+}
+
+dl#search br {
+  clear: both;
+}
+
+div.pagination {
+  margin-bottom: 1em;
+}
+
+div.pagination a:link, div.pagination a:visited {
+  text-decoration: none;
+}
+
+/* Documentation */
+
+dl.document_sections dt { 
+  font-weight: bold;
+}
+dl.document_sections dd { 
+  text-indent: -1em;
+  margin-left: 3em;
+}
+
+dl.document_sections { 
+  margin-bottom: 1em;
+}
+
+a.next_section {
+  float: right;
+  margin-left: 1em;
+  width: 50%;
+  text-align: left;
+}
+
+a.previous_section {
+  text-align: left;
+  margin-right: 1em;
+}
+
+#document_section_text table.picture_with_caption { 
+  float: right;
+  width: 210px;
+}
+
+/* the caption */
+table.center {  /* table.center is used on the product 1110 page */
+  margin-left: auto;
+  margin-right: auto;
+}
+
+table.right { 
+  float: right;
+  clear: right;
+  margin-left: 1em;
+}
+
+table.left { 
+  float: left;
+  clear: left;
+  display: block;
+  margin-right: 1em;
+}
+
+/* see below for more pictures */
+p#see_below { 
+  font-size: 80%;
+  font-family: Verdana, sans-serif;
+  line-height: 1.4em;
+}
+
+table.document_picture img { 
+  border: none;
+}
+
+.spaced_div {
+  margin-top:22px;
+}
+
+/* Products */
+
+/* the product picture and "add to cart" form */
+table.product_top { 
+  margin-bottom: 1em;
+}
+
+table.product_top, table.product_top td {
+  vertical-align: top;
+}
+
+/* general attachments */
+
+div.tab_page dd {
+  padding: 0;
+  margin: 0.5em 2em 1em 1em;
+  text-align: justify;
+}
+div.tab_page dt {
+  font-weight: bold;
+}
+
+/* attached pictures and documents */
+div.attached_documents div {
+  clear: both;
+}
+
+div.attached_documents div a {
+  font-weight: bold;
+}
+
+div.attached_documents div img {
+  float: left;
+  margin-bottom: 1em;
+  margin-right: 1em;
+}
+
+div.attached_pictures table { 
+  float: left;
+  width: 200px;
+  margin-right: 20px;
+  margin-bottom: 1em;
+}
+
+div.attached_pictures table td {
+  height: 200px;
+  text-align: center;
+  padding: 0;
+  margin: 0;
+}
+
+div.attached_pictures table td a img {
+  vertical-align: bottom;
+}
+
+div.attached_pictures table th {
+  height: 5em;
+  text-align: left;
+  vertical-align: top;
+}
+
+div.attached_pictures table th p { 
+  position: absolute;
+  width: 200px;
+  background-color: white;
+}
+
+/* attached documents */
+div.attached_documents { 
+  margin-bottom: 1em;
+}
+
+/* attached files in documents */
+div.document_section_text dl.attached_files dd {
+  padding: 0;
+  margin: 0.5em 2em 1em 1em;
+  text-align: justify;
+}
+div.document_section_text dl.attached_files dt {
+  font-weight: bold;
+  margin-top: 0.5em;
+}
+
+/* attached links */
+
+/* FAQs */
+
+/* Subcategory floating tables */
+
+div.subcategories {
+  margin-right: -15px;
+}
+
+table.subcategory { 
+  float: left;
+  width: 21em;
+  margin-right: 15px;
+  margin-bottom: 1em;
+  border-collapse: collapse;
+  font-size: 80%;
+  font-family: Verdana, sans-serif;
+  line-height: 1.4em;
+}
+
+table.subcategory td { 
+  height: 160px;
+  line-height: 0;
+  text-align: center;
+  vertical-align: middle;
+  padding: 0;
+}
+
+table.subcategory th.blurb { 
+  height: 16em;
+  text-align: left;
+  font-weight: normal;
+  vertical-align: top;
+}
+
+table.subcategory th h2 { 
+  font-size: 100%;
+  padding: 0;
+  margin: 0;
+}
+
+table.subcategory th p { 
+  position: absolute;
+  width: 21em;
+  background-color: white;
+  text-align: left !important;
+}
+
+/******** styles used for content on specific pages *********/
+table.warning { 
+  background-color: #ffffcc;
+  color: #000000;
+  margin-right: 15%;
+  margin-left: 15%;
+  padding: 0.4em;
+  text-align: justify;
+  border: solid #000000;
+  border-width: 1px;
+  margin-bottom: 1em;
+}  
+
+
+table.warning td { 
+  border-bottom: 0;
+}
+  
+table.warning A:visited {  background-color: #ffffcc; color: #52188b; }
+table.warning A:active {  background-color: #ffffcc; color: #ee0000; }
+table.warning A:hover {  background-color: #ffffcc; color: #009999; }
+table.warning A:link {  background-color: #ffffcc; color: #0000ee; }
+
+/* gear ratios table */
+
+table.gearratio { 
+  border: 1px solid #cccccc;
+}
+
+table.gearratio { 
+  white-space: nowrap;
+}
+
+table.gearratio td { 
+  border: 1px solid #cccccc;
+  padding: 0.1em;
+  margin: 0em;
+  font-family: Arial,sans-serif;
+  color: #000000;
+}
+
+table.gearratio td.odd { 
+  background-color: #ffffcc;
+  text-align: center;
+  font-size: 85%
+}
+
+table.gearratio td.even { 
+  background-color: #dddddd;
+  text-align: center;
+  font-size: 85%
+}
+
+table.gearratio td.oddrt { 
+  background-color: #ffffcc;
+  text-align: right;
+  font-size: 85%
+}
+
+table.gearratio td.evenrt { 
+  background-color: #dddddd;
+  text-align: right;
+  font-size: 85%
+}
+
+table.gearratio td.odd a { 
+  text-decoration: none;
+  background-color: #ffffcc;
+  font-size: 85%;
+}
+
+table.gearratio td.even a { 
+  text-decoration: none;
+  background-color: #dddddd;
+  font-size: 85%;
+}
+
+table.gearratio img { 
+ border-style: none;
+}
+
+/* plain table */
+
+table.plain {
+  border: 1px solid #cccccc;
+  text-align: left;
+ }
+
+table.plain td {
+  border: 1px solid #cccccc;
+  padding: 0.1em;
+  margin: 0em;
+  font-family: Arial,sans-serif;
+  color: #000000;
+  text-align: right;
+}
+
+/* turn off wrapping */
+span.nowrap { 
+  white-space: nowrap;
+}
+
+/* lib-pololu documentation */
+div.libpololu { 
+  margin-left: 1em;
+}
+
+div.libpololu p.cpp, div.libpololu p.c {
+  font-weight: bold;
+  margin: 0 !important;
+  padding: 0 !important;
+  margin-left: -1em !important;
+}
+
+div.libpololu p.cpp strong {
+  color: brown;
+}
+
+div.libpololu p.c strong {
+  color: green;
+}
+
+div.libpololu p.def { 
+  padding-left: 0;
+  margin-bottom: 1em;
+}
+
+div.libpololu p.example { 
+  font-family: monospace;
+}
+
+div.libpololu p.def strong
+{ 
+  color: red;
+  font-weight: normal;
+}
+
+div.libpololu h2
+{ 
+  margin-left: -1em !important;
+}
+
+div.libpololu div.key
+{ 
+  margin-bottom: 1em;
+}
+
+div.libpololu pre
+{ 
+  margin-bottom: 1em;
+}
+
+input.checkbox, input.radio
+{
+  vertical-align: middle;
+}
+
+/* STENCIL */
+.stencil_quote .thickness select
+{
+  width: 5.6em;
+}
+
+.stencil_quote .size .show input.text
+{
+  width: 3.5em;
+}
+
+table.check_out_quote td
+{
+  text-align: center;
+  padding-right: 3px;
+  padding-left: 3px;
+}
+
+table.check_out_quote th.turn_time
+{
+  text-decoration: underline;
+}
+
+table.check_out_quote
+{
+  margin-bottom: 1em;
+}
+
+/* table.check_out_quote .turn_time{ border: 1px solid black;} */
+
+table.check_out_quote .extended_price_label,
+table.check_out_quote .ship_date_label
+{
+  text-align: right;
+}
+
+.stencil_quote .warning label
+{
+  color: red;
+}
